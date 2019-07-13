@@ -1,0 +1,238 @@
+import java.math.BigDecimal
+
+fun getAllPossibleActions(
+        playerHand: Hand,
+        dealerHand: Hand,
+        split: Hand?,
+        splitAces: Boolean,
+        insurance: Boolean
+): List<Action> {
+    val actions = mutableListOf(Action.STAND)
+    if (splitAces) {
+        if (playerHand.size == 1) return mutableListOf(Action.HIT)
+        if (playerHand.size == 2) return actions
+    }
+    if (getPreferredValue(playerHand) < 21) {
+        actions.add(Action.HIT)
+        if (playerHand.size == 2) {
+            if (getPreferredValue(playerHand) < 21) actions.add(Action.DOUBLE)
+            if (split == null && playerHand.size == 2 && playerHand[0] == playerHand[1])
+                actions.add(Action.SPLIT)
+        }
+        if (!insurance && isSoft(dealerHand) && playerHand.size == 2)
+            actions.add(Action.INSURANCE)
+    }
+    return actions
+}
+
+fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    val newPlayerHand = addCard(card, playerHand)
+    val newShoe = removeCard(card, shoe)
+    return Pair(newPlayerHand, newShoe)
+}
+
+fun doDouble(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    return doHit(card, playerHand, shoe)
+}
+
+fun getActionsAndScores(playerHand: Hand,
+                        dealerHand: Hand,
+                        shoe: Shoe,
+                        double: Boolean,
+                        split: Hand?,
+                        splitAces: Boolean,
+                        insurance: Boolean): List<Pair<Action, BigDecimal>> {
+    val possibleActions: List<Action> = getAllPossibleActions(
+            playerHand,
+            dealerHand,
+            split,
+            splitAces,
+            insurance
+    )
+//    val actions = getHand(insurance, split, splitAces, dealerHand, playerHand)
+    val actions: List<Pair<Action, Double>>? = emptyList()
+    if (actions != null && actions.size != possibleActions.size) {
+//        println(playerHand, dealerHand)
+        // todo: string interpolation
+//        throw Error('Mismatched actions, possible: ${JSON.stringify(possibleActions)}, received: ${JSON.stringify(actions)}')
+    }
+    if (
+            actions == null ||
+            actions.isEmpty()
+    ) {
+        val calculatedActions: MutableList<Pair<Action, BigDecimal>> = mutableListOf()
+        for (action in possibleActions) {
+            val score = evaluateAction(
+                    action,
+                    playerHand,
+                    dealerHand,
+                    shoe,
+                    double,
+                    split,
+                    splitAces,
+                    insurance
+            )
+            calculatedActions.add(Pair(action, score))
+        }
+        // sort descending
+        calculatedActions.sortBy { x -> -x.second }
+//
+//        try {
+//            insertHand(insurance, split, splitAces, dealerHand, playerHand, calculatedActions)
+//        } catch (err) {
+//            console.log(
+//                    `Error inserting hand on args: ${JSON.stringify(arguments)}
+//            row: [${+insurance}, ${+split}, ${+splitAces}, ${dealerHand}, ${playerHand}]: ${
+//                (err as Error).name
+//            }: ${(err as Error).message}`
+//            )
+//        }
+        return calculatedActions
+    }
+    return actions.map { x -> Pair(x.first, BigDecimal(x.second)) }
+}
+
+fun getBestAction(
+        playerHand: Hand,
+        dealerHand: Hand,
+        shoe: Shoe,
+        double: Boolean,
+        split: Hand?,
+        splitAces: Boolean,
+        insurance: Boolean
+): Pair<Action, BigDecimal> {
+    val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, splitAces, insurance)
+    return actions.filter { x ->
+        canPerform(
+                x.first,
+                playerHand,
+                dealerHand,
+                double,
+                split,
+                splitAces,
+                insurance
+        )
+    }[0]
+}
+
+fun canPerform(
+        action: Action,
+        playerHand: Hand,
+        dealerHand: Hand,
+        double: Boolean,
+        split: Hand?,
+        splitAces: Boolean,
+        insurance: Boolean
+): Boolean {
+    return when (action) {
+        Action.STAND -> true
+        Action.HIT ->
+            // playerHand value will always be <21 at this stage
+            canHit(playerHand, double, splitAces)
+        Action.DOUBLE ->
+            canDouble(playerHand, double, splitAces)
+        Action.INSURANCE ->
+            canInsure(playerHand, dealerHand, double, insurance)
+        Action.SPLIT ->
+            canSplit(playerHand, split)
+        Action.SURRENDER ->
+            false
+    }
+}
+
+fun evaluateAction(
+        action: Action,
+        playerHand: Hand,
+        dealerHand: Hand,
+        shoe: Shoe,
+        double: Boolean,
+        split: Hand?,
+        splitAces: Boolean,
+        insurance: Boolean
+): BigDecimal {
+    if (action == Action.STAND) {
+        val playerValue = getPreferredValue(playerHand)
+        return scoreHand(
+                getPreferredValue(playerHand),
+                dealerHand,
+                Card.fromByte(dealerHand[0]),
+                shoe,
+                playerValue == 21 && playerHand.size == 2,
+                double,
+                insurance,
+                splitAces
+        )
+    } else if (action == Action.HIT) {
+//        val newShoe: Shoe
+//        val newPlayerHand: Hand
+        val scores: MutableList<BigDecimal> = mutableListOf()
+        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+            val (newPlayerHand, newShoe) = doHit(card, playerHand, shoe)
+            val (nextAction, score) = getBestAction(
+                    newPlayerHand,
+                    dealerHand,
+                    shoe,
+                    double,
+                    split,
+                    splitAces,
+                    insurance
+            )
+            scores.add(prob.times(score))
+        }
+        return scores.reduce { x, y -> x.plus(y) }
+    } else if (action == Action.DOUBLE) {
+        val scores: MutableList<BigDecimal> = mutableListOf()
+        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+            val (newPlayerHand, newShoe) = doDouble(card, playerHand, shoe)
+            val (nextAction, score) = getBestAction(
+                    newPlayerHand,
+                    dealerHand,
+                    shoe,
+                    true,
+                    split,
+                    splitAces,
+                    insurance
+            )
+            scores.add(prob.times(score).times(BigDecimal(2)))
+        }
+        return scores.reduce { x, y -> x.plus(y) }
+    } else if (action == Action.SPLIT) {
+        val scores: MutableList<BigDecimal> = mutableListOf()
+        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+            val newShoe = removeCard(card, shoe)
+            for ((card2, prob2) in getNextStatesAndProbabilities(shoe)) {
+                val newShoe2 = removeCard(card2, newShoe)
+                val hand1 = fromCards(Card.fromByte(playerHand[0]), card)
+                val hand2 = fromCards(Card.fromByte(playerHand[0]), card2)
+                // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
+                val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, isSoft(playerHand), insurance)
+                val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, isSoft(playerHand), insurance)
+                scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
+            }
+        }
+        return scores.reduce { x, y -> x.plus(y) }
+        // val [nextAction, score] = getBestAction(
+        //   fromCard(playerHand[0]),
+        //   dealerHand,
+        //   shoe,
+        //   double,
+        //   true,
+        //   isSoft(playerHand),
+        //   insurance
+        // )
+        // return score.times(2)
+    } else if (action == Action.INSURANCE) {
+        val (nextAction, score) = getBestAction(
+                playerHand,
+                dealerHand,
+                shoe,
+                double,
+                split,
+                splitAces,
+                true
+        )
+        return score
+    }
+    // no-op
+    return BigDecimal(0)
+}
