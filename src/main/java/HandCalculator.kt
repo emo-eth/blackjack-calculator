@@ -196,7 +196,7 @@ fun evaluateAction(
         val scores: MutableList<BigDecimal> = mutableListOf()
         for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
             val newShoe = removeCard(card, shoe)
-            for ((card2, prob2) in getNextStatesAndProbabilities(shoe).shuffled()) {
+            for ((card2, prob2) in getNextStatesAndProbabilities(newShoe).shuffled()) {
                 val newShoe2 = removeCard(card2, newShoe)
                 val hand1 = fromCards(Card.fromByte(playerHand[0]), card)
                 val hand2 = fromCards(Card.fromByte(playerHand[0]), card2)
