@@ -1,41 +1,37 @@
-
-
-
-fun doForDealerCard(card: Card, reverse:Boolean) {
-    val shoe = makeShoe(6);
-    val dealer = fromCard(card);
-    val shoeAfterDealer = removeCard(card, shoe);
-    val nextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterDealer);
-//    if (reverse) nextStatesAndProbabilities.reverse();
-    for ((card2, prob2) in nextStatesAndProbabilities) {
-        val player1Card = fromCard(card2);
-        val shoeAfterPlayerCard1 = removeCard(card, shoeAfterDealer);
-        val nextNextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterPlayerCard1);
-//        if (reverse) nextNextStatesAndProbabilities.reverse();
-        for ((card3, prob3) in nextNextStatesAndProbabilities) {
-        val player2Cards = addCard(card3, player1Card);
-        val shoeAfterPlayerCard2 = removeCard(card3, shoeAfterPlayerCard1);
-        println(listOf(player2Cards, dealer))
-        getBestAction(
-                player2Cards,
-        dealer,
-        shoeAfterPlayerCard2,
-        false,
-        null,
-        false,
-        false
-        );
+fun main(args: Array<String>) {
+    println(args[0].toInt())
+    println(Runtime.getRuntime().availableProcessors())
+    var threads = IntArray(8)
+    7.until(10).toList().forEach{
+        println(it)
+        threads.asList().parallelStream().forEach{ _ ->
+            doForDealerCard(Card.fromByte(it.toByte()))
+        }
     }
-    }
-//    await pool.end();
 }
-//
-//async function populate() {
-//    console.log(+process.argv[2], +process.argv[3]>0);
-//    val reverse = +process.argv[3] > 0;
-//    doForDealerCard(+process.argv[2], reverse);
-//}
-//
-//populate().catch(err => {
-//    console.log(err);
-//});
+
+fun doForDealerCard(dealerCard: Card) {
+    val shoe = makeShoe(6)
+    val dealer = fromCard(dealerCard)
+    val shoeAfterDealer = removeCard(dealerCard, shoe)
+    val nextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterDealer).shuffled()
+    for ((playerCard1, prob2) in nextStatesAndProbabilities) {
+        val player1Card = fromCard(playerCard1)
+        val shoeAfterPlayerCard1 = removeCard(playerCard1, shoeAfterDealer)
+        val nextNextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterPlayerCard1).shuffled()
+        for ((playerCard2, prob3) in nextNextStatesAndProbabilities) {
+            val player2Cards = addCard(playerCard2, player1Card)
+            val shoeAfterPlayerCard2 = removeCard(playerCard2, shoeAfterPlayerCard1)
+            println("${player2Cards[0]}${player2Cards[1]}, ${dealer[0]}")
+            getBestAction(
+                    player2Cards,
+                    dealer,
+                    shoeAfterPlayerCard2,
+                    false,
+                    null,
+                    false,
+                    false
+            )
+        }
+    }
+}

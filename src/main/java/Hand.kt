@@ -1,4 +1,3 @@
-
 typealias Hand = ByteArray
 
 fun addCard(card: Card, hand: Hand): Hand {
@@ -12,7 +11,7 @@ fun fromCard(card: Card): Hand {
 }
 
 fun fromCards(vararg cards: Card): Hand {
-    return cards.map{ card -> card.num }.sorted().toByteArray()
+    return cards.map { card -> card.num }.sorted().toByteArray()
 }
 
 
@@ -21,7 +20,7 @@ fun isSoft(hand: Hand): Boolean {
 }
 
 fun getHardValue(hand: Hand): Int {
-    return hand.map{x -> x.toInt() + 1}.sum();
+    return hand.map { x -> x.toInt() + 1 }.sum()
 }
 
 fun getSoftValue(hand: Hand): Int {
@@ -29,7 +28,7 @@ fun getSoftValue(hand: Hand): Int {
     return getHardValue(hand)
 }
 
-fun  getPreferredValue(hand: Hand): Int {
+fun getPreferredValue(hand: Hand): Int {
     if (isSoft(hand)) {
         val soft = getSoftValue(hand)
         if (soft > 21) {

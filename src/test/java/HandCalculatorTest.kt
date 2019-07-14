@@ -1,18 +1,16 @@
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
+import org.spekframework.spek2.dsl.Skip
 import java.math.BigDecimal
 
 object HandCalculatorTest : Spek({
     group("handCalculatorTest") {
 
         test("Stand on BJ") {
-            var playerHand = fromCards(Card.TEN, Card.ACE)
-            var dealerHand = fromCard(Card.TWO)
-            var shoe = makeShoe(6)
-            shoe = removeCard(Card.TEN, shoe)
-            shoe = removeCard(Card.ACE, shoe)
-            shoe = removeCard(Card.TWO, shoe)
-            var (action, score) = getBestAction(
+            val playerHand = fromCards(Card.TEN, Card.ACE)
+            val dealerHand = fromCard(Card.TWO)
+            val shoe = fromHands(6, playerHand, dealerHand)
+            val (action, score) = getBestAction(
                     playerHand,
                     dealerHand,
                     shoe,
@@ -25,119 +23,110 @@ object HandCalculatorTest : Spek({
         }
 
 
-//        test("Stand on 20") {
-//
-//            var playerHand = fromCards(Card.TEN, Card.TEN)
-//            var dealerHand = fromCard(Card.TWO)
-//            var shoe = makeShoe(6)
-//            shoe = removeCard(Card.TEN, shoe)
-//            shoe = removeCard(Card.TEN, shoe)
-//            shoe = removeCard(Card.TWO, shoe)
-//            var (action, score) = getBestAction(
-//                    playerHand,
-//                    dealerHand,
-//                    shoe,
-//                    false,
-//                    null,
-//                    false,
-//                    false
-//            )
-//            assertThat(action).isEqualTo(Action.STAND)
-//        }
+        test("Stand on 20") {
 
-//        test("Hit (or double) on 10") {
-//            var playerHand = fromCards(Card.FIVE, Card.FIVE)
-//            var dealerHand = fromCard(Card.TWO)
-//            var shoe = makeShoe(6)
-//            shoe = removeCard(Card.FIVE, shoe)
-//            shoe = removeCard(Card.FIVE, shoe)
-//            shoe = removeCard(Card.TWO, shoe)
-//
-//            var (action, score) = getBestAction(
-//                    playerHand,
-//                    dealerHand,
-//                    shoe,
-//                    false,
-//                    null,
-//                    false,
-//                    false
-//            )
-//            assertThat(action).isEqualTo(Action.DOUBLE)
-//        }
+            val playerHand = fromCards(Card.TEN, Card.TEN)
+            val dealerHand = fromCard(Card.TWO)
+            val shoe = fromHands(6, playerHand, dealerHand)
+            val (action, score) = getBestAction(
+                    playerHand,
+                    dealerHand,
+                    shoe,
+                    false,
+                    null,
+                    false,
+                    false
+            )
+            assertThat(action).isEqualTo(Action.STAND)
+        }
 
-//        test("Always split on aces") {
-//            var playerHand = fromCards(Card.ACE, Card.ACE) // Hand.newHand(Card.ACE, Card.ACE)
-//            var dealerHand = fromCard(Card.TEN)
-//            var shoe = makeShoe(6)
-//            shoe = removeCard(Card.ACE, shoe)
-//            shoe = removeCard(Card.ACE, shoe)
-//            shoe = removeCard(Card.TEN, shoe)
-//            var (action, score) = getBestAction(
-//                    playerHand,
-//                    dealerHand,
-//                    shoe,
-//                    false,
-//                    null,
-//                    false,
-//                    false
-//            )
-//            assertThat(action).isEqualTo(Action.SPLIT)
-//        }
+        test("Hit (or double) on 10", Skip.No, 60 * 1000) {
 
-//        test("insurance works") {
-//            var playerHand = fromCards(Card.FIVE, Card.NINE)
-//            var dealerHand = fromCard(Card.ACE)
-//            var shoe = makeShoe(6)
-//            shoe = removeCard(Card.ACE, shoe)
-//            shoe = removeCard(Card.FIVE, shoe)
-//            shoe = removeCard(Card.NINE, shoe)
-//            var (action, score) = getBestAction(playerHand, dealerHand, shoe, false, null, false, false)
-//
-//        }
+            val playerHand = fromCards(Card.FIVE, Card.FIVE)
+            val dealerHand = fromCard(Card.TWO)
+            val shoe = fromHands(6, playerHand, dealerHand)
 
-//        test("split aces") {
-//            var playerHand = fromCards(Card.ACE, Card.TEN)
-//            var dealerHand = fromCard(Card.THREE)
-//            var shoe = makeShoe(6)
-//            var (action, score) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.ACE), true, false)
-//            assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.0)
-//
-//        }
+            val (action, score) = getBestAction(
+                    playerHand,
+                    dealerHand,
+                    shoe,
+                    false,
+                    null,
+                    false,
+                    false
+            )
+            assertThat(action).isEqualTo(Action.DOUBLE)
+        }
 
-//        test("differences between splits") {
-//            var shoe = makeShoe(6)
-//            var playerHand = fromCards(Card.ACE, Card.TWO)
-//            var dealerHand = fromCard(Card.TEN)
-//            shoe = removeCard(Card.ACE, shoe)
-//            shoe = removeCard(Card.TEN, shoe)
-//            shoe = removeCard(Card.TEN, shoe)
-//            var (action1, score1) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), true, false)
-//            var (action2, score2) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), false, false)
-//
-//            assertThat(score1).isEqualTo(score2)
-//        }
+        test("Always split on aces", Skip.No, 60 * 1000) {
+            val playerHand = fromCards(Card.ACE, Card.ACE) // Hand.newHand(Card.ACE, Card.ACE)
+            val dealerHand = fromCard(Card.TEN)
+            val shoe = fromHands(6, playerHand, dealerHand)
 
-//        test("house edge") {
-//            var scores: MutableList<BigDecimal> = mutableListOf()
-//            var shoe = makeShoe(6)
-//            for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
-//                var dealer = fromCard(card)
-//                var shoeAfterDealer = removeCard(card, shoe)
-//                for ((card2, prob2) in getNextStatesAndProbabilities(shoeAfterDealer)) {
-//                    var player1Card = fromCard(card2)
-//                    var shoeAfterPlayerCard1 = removeCard(card, shoeAfterDealer)
-//                    for ((card3, prob3) in getNextStatesAndProbabilities(shoeAfterPlayerCard1)) {
-//                        var player2Cards = addCard(card3, player1Card)
-//                        var shoeAfterPlayerCard2 = removeCard(card3, shoeAfterPlayerCard1)
-//                        var (action, score) = getBestAction(player2Cards, dealer, shoeAfterPlayerCard2, false, null, false, false)
-//                        scores.add(score.times(prob).times(prob2).times(prob3))
-//                    }
-//                }
-//            }
-//            var overall = scores.reduce { x, y -> x.plus(y) }
-//            println("House edge: " + overall)
-//            // assertThat(overall).isStrictlyBetween(-1, 0)
-//        }
+            val (action, score) = getBestAction(
+                    playerHand,
+                    dealerHand,
+                    shoe,
+                    false,
+                    null,
+                    false,
+                    false
+            )
+            assertThat(action).isEqualTo(Action.SPLIT)
+        }
+
+        test("insurance works") {
+            val playerHand = fromCards(Card.FIVE, Card.NINE)
+            val dealerHand = fromCard(Card.ACE)
+            val shoe = fromHands(6, playerHand, dealerHand)
+            val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, null, false, false)
+
+        }
+
+        test("split aces") {
+            val playerHand = fromCards(Card.ACE, Card.TEN)
+            val dealerHand = fromCard(Card.THREE)
+            val splitHand = fromCards(Card.ACE, Card.ACE)
+            val shoe = fromHands(6, playerHand, dealerHand, splitHand)
+
+            val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, splitHand, true, false)
+            assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.0)
+
+        }
+
+        test("differences between splits") {
+            val playerHand = fromCards(Card.ACE, Card.TWO)
+            val dealerHand = fromCard(Card.TEN)
+            val shoe = fromHands(6, playerHand, dealerHand)
+
+
+            val (action1, score1) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), true, false)
+            val (action2, score2) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), false, false)
+
+            assertThat(score1).isEqualTo(score2)
+        }
+
+        test("house edge") {
+            val scores: MutableList<BigDecimal> = mutableListOf()
+            val shoe = makeShoe(6)
+            for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+                val dealer = fromCard(card)
+                val shoeAfterDealer = removeCard(card, shoe)
+                for ((card2, prob2) in getNextStatesAndProbabilities(shoeAfterDealer)) {
+                    val player1Card = fromCard(card2)
+                    val shoeAfterPlayerCard1 = removeCard(card, shoeAfterDealer)
+                    for ((card3, prob3) in getNextStatesAndProbabilities(shoeAfterPlayerCard1)) {
+                        val player2Cards = addCard(card3, player1Card)
+                        val shoeAfterPlayerCard2 = removeCard(card3, shoeAfterPlayerCard1)
+                        val (action, score) = getBestAction(player2Cards, dealer, shoeAfterPlayerCard2, false, null, false, false)
+                        scores.add(score.times(prob).times(prob2).times(prob3))
+                    }
+                }
+            }
+            val overall = scores.reduce { x, y -> x.plus(y) }
+            println("House edge: " + overall)
+            assertThat(overall.toDouble()).isStrictlyBetween(-1.0, 0.0)
+        }
 
     }
 })

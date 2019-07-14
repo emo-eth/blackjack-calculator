@@ -1,19 +1,19 @@
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.postgresql.ds.PGPoolingDataSource
 import java.math.BigDecimal
-import org.postgresql.ds.PGSimpleDataSource
 import java.nio.charset.Charset
-import java.sql.DriverManager
 
 
 object DbSettings {
     val db by lazy {
-        val dataSource = PGSimpleDataSource()
+        val dataSource = PGPoolingDataSource()
         dataSource.databaseName = "jameswenzel"
         dataSource.user = "jameswenzel"
         dataSource.portNumber = 5432
         dataSource.serverName = "localhost"
         dataSource.password = null
+        dataSource.maxConnections = 300
         Database.connect(dataSource)
     }
 
@@ -75,7 +75,6 @@ fun insertHand(
     val calculationMap = calculations.map {
         it.first to it.second
     }.toMap()
-    println(Charset.defaultCharset())
     DbSettings.db
     transaction {
         GameState.insert {
@@ -107,7 +106,7 @@ fun deleteHand(
 }
 
 fun initialize() {
-   DbSettings.db
+    DbSettings.db
 
     transaction {
         addLogger(StdOutSqlLogger)
@@ -116,6 +115,6 @@ fun initialize() {
 
 }
 
-private fun toUTF8(hand: Hand):Hand {
-    return hand.map{(it + 0x30).toByte()}.toByteArray()
+private fun toUTF8(hand: Hand): Hand {
+    return hand.map { (it + 0x30).toByte() }.toByteArray()
 }

@@ -1,4 +1,5 @@
 import java.math.BigDecimal
+import java.sql.SQLException
 
 fun getAllPossibleActions(
         playerHand: Hand,
@@ -76,17 +77,12 @@ fun getActionsAndScores(playerHand: Hand,
         }
         // sort descending
         calculatedActions.sortBy { x -> -x.second }
-//
-//        try {
-//            insertHand(insurance, split, splitAces, dealerHand, playerHand, calculatedActions)
-//        } catch (err) {
-//            console.log(
-//                    `Error inserting hand on args: ${JSON.stringify(arguments)}
-//            row: [${+insurance}, ${+split}, ${+splitAces}, ${dealerHand}, ${playerHand}]: ${
-//                (err as Error).name
-//            }: ${(err as Error).message}`
-//            )
-//        }
+
+        try {
+            insertHand(insurance, split, splitAces, dealerHand, playerHand, calculatedActions)
+        } catch (ex: SQLException) {
+            println(ex.message)
+        }
         return calculatedActions
     }
     return actions.map { x -> Pair(x.first, x.second) }
@@ -166,7 +162,7 @@ fun evaluateAction(
 //        val newShoe: Shoe
 //        val newPlayerHand: Hand
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
             val (newPlayerHand, newShoe) = doHit(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
@@ -182,7 +178,7 @@ fun evaluateAction(
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.DOUBLE) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
             val (newPlayerHand, newShoe) = doDouble(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
@@ -198,9 +194,9 @@ fun evaluateAction(
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.SPLIT) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
+        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
             val newShoe = removeCard(card, shoe)
-            for ((card2, prob2) in getNextStatesAndProbabilities(shoe)) {
+            for ((card2, prob2) in getNextStatesAndProbabilities(shoe).shuffled()) {
                 val newShoe2 = removeCard(card2, newShoe)
                 val hand1 = fromCards(Card.fromByte(playerHand[0]), card)
                 val hand2 = fromCards(Card.fromByte(playerHand[0]), card2)

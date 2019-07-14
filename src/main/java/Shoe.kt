@@ -50,7 +50,7 @@ fun makeShoe(numDecks: Int): Shoe {
 
 fun removeCard(card: Card, shoe: Shoe): Shoe {
     if (shoe[card.num.toInt()] == 0.toShort()) {
-        throw Error("Cannot remove empty card");
+        throw Error("Cannot remove empty card")
     }
     val newShoe = shoe.clone()
     newShoe[card.num.toInt()] = (newShoe[card.num.toInt()] - 1).toShort()
@@ -59,13 +59,13 @@ fun removeCard(card: Card, shoe: Shoe): Shoe {
 
 
 fun fromHands(numDecks: Int, vararg hands: Hand): Shoe {
-    var shoe = makeShoe(numDecks);
+    var shoe = makeShoe(numDecks)
     for (hand in hands) {
         for (card in hand) {
-            shoe = removeCard(Card.fromByte(card), shoe);
+            shoe = removeCard(Card.fromByte(card), shoe)
         }
     }
-    return shoe;
+    return shoe
 }
 
 fun fromCounts(vararg counts: Pair<Card, Int>): Shoe {
