@@ -159,15 +159,13 @@ fun evaluateAction(
                 splitAces
         )
     } else if (action == Action.HIT) {
-//        val newShoe: Shoe
-//        val newPlayerHand: Hand
         val scores: MutableList<BigDecimal> = mutableListOf()
         for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
             val (newPlayerHand, newShoe) = doHit(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
                     dealerHand,
-                    shoe,
+                    newShoe,
                     double,
                     split,
                     splitAces,
@@ -183,7 +181,7 @@ fun evaluateAction(
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
                     dealerHand,
-                    shoe,
+                    newShoe,
                     true,
                     split,
                     splitAces,
