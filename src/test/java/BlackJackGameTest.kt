@@ -71,7 +71,6 @@ object BlackJackGameTest : Spek({
             )
             assertThat(utility.toDouble()).isEqualTo(-1.5)
 
-
         }
 
         test("getactions makes sense") {

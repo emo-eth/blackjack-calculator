@@ -9,7 +9,7 @@ fun getAllPossibleActions(
 ): List<Action> {
     val actions = mutableListOf(Action.STAND)
     if (splitAces) {
-        if (playerHand.size == 1) return mutableListOf(Action.HIT)
+        if (playerHand.size == 1) return listOf(Action.HIT)
         if (playerHand.size == 2) return actions
     }
     if (getPreferredValue(playerHand) < 21) {
@@ -49,8 +49,8 @@ fun getActionsAndScores(playerHand: Hand,
             splitAces,
             insurance
     )
-//    val actions = getHand(insurance, split, splitAces, dealerHand, playerHand)
-    val actions: List<Pair<Action, Double>>? = emptyList()
+    val actions = getHand(insurance, split, splitAces, dealerHand, playerHand)
+//    val actions: List<Pair<Action, Double>>? = emptyList()
     if (actions != null && actions.size != possibleActions.size) {
 //        println(playerHand, dealerHand)
         // todo: string interpolation
@@ -89,7 +89,7 @@ fun getActionsAndScores(playerHand: Hand,
 //        }
         return calculatedActions
     }
-    return actions.map { x -> Pair(x.first, BigDecimal(x.second)) }
+    return actions.map { x -> Pair(x.first, x.second) }
 }
 
 fun getBestAction(
@@ -211,16 +211,6 @@ fun evaluateAction(
             }
         }
         return scores.reduce { x, y -> x.plus(y) }
-        // val [nextAction, score] = getBestAction(
-        //   fromCard(playerHand[0]),
-        //   dealerHand,
-        //   shoe,
-        //   double,
-        //   true,
-        //   isSoft(playerHand),
-        //   insurance
-        // )
-        // return score.times(2)
     } else if (action == Action.INSURANCE) {
         val (nextAction, score) = getBestAction(
                 playerHand,
