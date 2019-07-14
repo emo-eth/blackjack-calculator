@@ -1,4 +1,5 @@
 fun main(args: Array<String>) {
+    initialize()
     println(args[0].toInt())
     println(Runtime.getRuntime().availableProcessors())
     var threads = IntArray(8)

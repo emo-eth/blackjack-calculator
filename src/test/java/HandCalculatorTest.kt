@@ -103,7 +103,7 @@ object HandCalculatorTest : Spek({
             val (action1, score1) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), true, false)
             val (action2, score2) = getBestAction(playerHand, dealerHand, shoe, false, fromCards(Card.ACE, Card.TWO), false, false)
 
-            assertThat(score1).isEqualTo(score2)
+            assertThat(score1).isNotEqualTo(score2)
         }
 
         test("house edge") {
