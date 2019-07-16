@@ -2,6 +2,9 @@ package calculator
 
 import java.math.BigDecimal
 import java.sql.SQLException
+import java.util.logging.Logger
+
+val logger: Logger = Logger.getLogger("HandCalculator")
 
 fun getAllPossibleActions(
         playerHand: Hand,
@@ -63,6 +66,7 @@ fun getActionsAndScores(playerHand: Hand,
             actions == null ||
             actions.isEmpty()
     ) {
+        logger.info("Computing hand ${toUTF8(playerHand)} ${if (split == null) "" else toUTF8(split)} ${toUTF8(dealerHand)} $insurance $splitAces")
         val calculatedActions: MutableList<Pair<Action, BigDecimal>> = mutableListOf()
         for (action in possibleActions) {
             val score = evaluateAction(

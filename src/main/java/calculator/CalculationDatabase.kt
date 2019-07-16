@@ -126,6 +126,6 @@ fun initialize() {
 
 }
 
-private fun toUTF8(hand: Hand): Hand {
+fun toUTF8(hand: Hand): Hand {
     return hand.map { (it + 0x30).toByte() }.toByteArray()
 }
