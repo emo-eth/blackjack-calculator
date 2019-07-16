@@ -55,7 +55,7 @@ fun getActionsAndScores(playerHand: Hand,
     if (actions != null && actions.size != possibleActions.size) {
 //        println(playerHand, dealerHand)
         // todo: string interpolation
-//        throw Error('Mismatched actions, possible: ${JSON.stringify(possibleActions)}, received: ${JSON.stringify(actions)}')
+        throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}")
     }
     if (
             actions == null ||

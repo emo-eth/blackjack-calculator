@@ -1,3 +1,6 @@
+import GameState.dealer
+import GameState.player
+import GameState.split
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource
@@ -110,12 +113,13 @@ fun initialize() {
 
     transaction {
         addLogger(StdOutSqlLogger)
-//        try {
-//            exec(SchemaUtils.createIndex(Index(listOf(player, dealer, split), false))[0])
-//        } catch (ex: Exception) {
-//            println(ex.message)
-//        }
+
         SchemaUtils.create(GameState)
+        try {
+            exec(SchemaUtils.createIndex(Index(listOf(player, dealer, split), false))[0])
+        } catch (ex: Exception) {
+            println(ex.message)
+        }
     }
 
 }

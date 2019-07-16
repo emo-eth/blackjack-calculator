@@ -2,8 +2,8 @@ fun main(args: Array<String>) {
     initialize()
     println(args[0].toInt())
     println(Runtime.getRuntime().availableProcessors())
-    var threads = IntArray(8)
-    7.until(10).toList().forEach{
+    val threads = IntArray(8)
+    0.until(10).toList().forEach{
         println(it)
         threads.asList().parallelStream().forEach{ _ ->
             doForDealerCard(Card.fromByte(it.toByte()))
