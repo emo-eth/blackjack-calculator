@@ -1,10 +1,13 @@
+package calculator
+
+import calculator.*
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 
 object HandTest : Spek({
-    group("HandTest") {
+    group("calculator.HandTest") {
         test("get values work") {
-            var hand = fromCards (Card.TEN, Card.TEN)
+            var hand = fromCards(Card.TEN, Card.TEN)
             assertThat(getPreferredValue(hand)).isEqualTo(20)
             hand = fromCards(Card.FIVE, Card.ACE)
             assertThat(getSoftValue(hand)).isEqualTo(16)
@@ -14,8 +17,8 @@ object HandTest : Spek({
             assertThat(getPreferredValue(hand)).isEqualTo(12)
         }
 
-        test("isSoft") {
-            val hand = fromCards (Card.FIVE, Card.ACE)
+        test("calculator.isSoft") {
+            val hand = fromCards(Card.FIVE, Card.ACE)
             assertThat(isSoft(hand)).isTrue()
         }
 

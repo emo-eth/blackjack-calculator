@@ -1,3 +1,5 @@
+package calculator
+
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -17,7 +19,7 @@ enum class Card(val num: Byte) {
 
     companion object {
         private val map = Card.values().associateBy(Card::num)
-        fun fromByte(type: Byte) = map.getOrDefault(type, Card.ACE)
+        fun fromByte(type: Byte) = map.getOrDefault(type, ACE)
     }
 
 }

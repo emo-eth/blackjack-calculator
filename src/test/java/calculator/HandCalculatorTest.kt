@@ -1,3 +1,5 @@
+package calculator
+
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.dsl.Skip
@@ -59,7 +61,7 @@ object HandCalculatorTest : Spek({
         }
 
         test("Always split on aces", Skip.No, 60 * 1000) {
-            val playerHand = fromCards(Card.ACE, Card.ACE) // Hand.newHand(Card.ACE, Card.ACE)
+            val playerHand = fromCards(Card.ACE, Card.ACE) // calculator.Hand.newHand(calculator.Card.ACE, calculator.Card.ACE)
             val dealerHand = fromCard(Card.TEN)
             val shoe = fromHands(6, playerHand, dealerHand)
 

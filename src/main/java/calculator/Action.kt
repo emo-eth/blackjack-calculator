@@ -1,3 +1,5 @@
+package calculator
+
 enum class Action(val num: Int) {
     HIT(0),
     STAND(1),
@@ -8,6 +10,6 @@ enum class Action(val num: Int) {
 
     companion object {
         private val map = Action.values().associateBy(Action::num)
-        fun fromInt(type: Int) = map.getOrDefault(type, Action.STAND)
+        fun fromInt(type: Int) = map.getOrDefault(type, STAND)
     }
 }

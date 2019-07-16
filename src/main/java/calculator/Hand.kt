@@ -1,3 +1,5 @@
+package calculator
+
 typealias Hand = ByteArray
 
 fun addCard(card: Card, hand: Hand): Hand {

@@ -1,3 +1,6 @@
+package calculator
+
+import calculator.*
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import java.math.BigDecimal

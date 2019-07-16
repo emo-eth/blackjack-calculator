@@ -1,6 +1,8 @@
-import GameState.dealer
-import GameState.player
-import GameState.split
+package calculator
+
+import calculator.GameState.dealer
+import calculator.GameState.player
+import calculator.GameState.split
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource

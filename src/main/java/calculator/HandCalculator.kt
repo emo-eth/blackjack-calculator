@@ -1,3 +1,5 @@
+package calculator
+
 import java.math.BigDecimal
 import java.sql.SQLException
 
@@ -51,7 +53,7 @@ fun getActionsAndScores(playerHand: Hand,
             insurance
     )
     val actions = getHand(insurance, split, splitAces, dealerHand, playerHand)
-//    val actions: List<Pair<Action, Double>>? = emptyList()
+//    val actions: List<Pair<calculator.Action, Double>>? = emptyList()
     if (actions != null && actions.size != possibleActions.size) {
 //        println(playerHand, dealerHand)
         // todo: string interpolation

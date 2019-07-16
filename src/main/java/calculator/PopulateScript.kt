@@ -1,3 +1,5 @@
+package calculator
+
 fun main(args: Array<String>) {
     initialize()
     println(args[0].toInt())
