@@ -66,7 +66,7 @@ fun getActionsAndScores(playerHand: Hand,
             actions == null ||
             actions.isEmpty()
     ) {
-        logger.info("Computing hand ${toUTF8(playerHand)} ${if (split == null) "" else toUTF8(split)} ${toUTF8(dealerHand)} $insurance $splitAces")
+        logger.info("Computing hand ${String(toUTF8(playerHand))} ${if (split == null) "" else String(toUTF8(split))} ${String(toUTF8(dealerHand))} $insurance $splitAces")
         val calculatedActions: MutableList<Pair<Action, BigDecimal>> = mutableListOf()
         for (action in possibleActions) {
             val score = evaluateAction(
