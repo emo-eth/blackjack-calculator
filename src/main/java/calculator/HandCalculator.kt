@@ -2,9 +2,11 @@ package calculator
 
 import java.math.BigDecimal
 import java.sql.SQLException
+import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
-val logger: Logger = Logger.getLogger("HandCalculator")
+private val logger: Logger = Logger.getLogger("HandCalculator")
+private val lock = ReentrantLock()
 
 fun getAllPossibleActions(
         playerHand: Hand,
@@ -142,6 +144,16 @@ fun canPerform(
     }
 }
 
+fun <T> lockAdd(listOf: MutableList<T>, value: T) {
+    logger.info("Locking to add")
+    lock.lock()
+    try {
+        listOf.add(value)
+    } finally {
+        lock.unlock()
+    }
+}
+
 fun evaluateAction(
         action: Action,
         playerHand: Hand,
@@ -182,7 +194,7 @@ fun evaluateAction(
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.DOUBLE) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
+        getNextStatesAndProbabilities(shoe).shuffled().parallelStream().forEach { (card, prob) ->
             val (newPlayerHand, newShoe) = doDouble(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
@@ -193,12 +205,27 @@ fun evaluateAction(
                     splitAces,
                     insurance
             )
-            scores.add(prob.times(score).times(BigDecimal(2)))
+            lockAdd(scores, prob.times(score).times(BigDecimal(2)))
+        }
+        getNextStatesAndProbabilities(shoe).shuffled().parallelStream().forEach {
+            (card, prob) ->
+            val (newPlayerHand, newShoe) = doDouble(card, playerHand, shoe)
+            val (nextAction, score) = getBestAction(
+                    newPlayerHand,
+                    dealerHand,
+                    newShoe,
+                    true,
+                    split,
+                    splitAces,
+                    insurance
+            )
+            lockAdd(scores, prob.times(score).times(BigDecimal(2)))
         }
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.SPLIT) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
+        getNextStatesAndProbabilities(shoe).shuffled().parallelStream().forEach {
+            (card, prob) ->
             val newShoe = removeCard(card, shoe)
             for ((card2, prob2) in getNextStatesAndProbabilities(newShoe).shuffled()) {
                 val newShoe2 = removeCard(card2, newShoe)
@@ -207,7 +234,7 @@ fun evaluateAction(
                 // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
                 val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, isSoft(playerHand), insurance)
                 val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, isSoft(playerHand), insurance)
-                scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
+                lockAdd(scores, scoreHand1.plus(scoreHand2).times(prob).times(prob2))
             }
         }
         return scores.reduce { x, y -> x.plus(y) }

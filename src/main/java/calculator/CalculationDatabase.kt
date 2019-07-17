@@ -1,5 +1,10 @@
 package calculator
 
+import calculator.GameState.actionDouble
+import calculator.GameState.actionHit
+import calculator.GameState.actionInsurance
+import calculator.GameState.actionSplit
+import calculator.GameState.actionStand
 import calculator.GameState.dealer
 import calculator.GameState.player
 import calculator.GameState.split
@@ -8,6 +13,24 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource
 import java.math.BigDecimal
 import java.nio.charset.Charset
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.locks.ReentrantLock
+import java.util.logging.Logger
+
+
+data class MapKey(val playerHandString: String, val dealerHand: String, val split: String?, val splitAces: Boolean, val insurance: Boolean)
+
+val map: ConcurrentMap<MapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
+val MAX_MAP_ENTRIES = 100
+private val lock = ReentrantLock()
+private val logger: Logger = Logger.getLogger("CalculationDatabase")
+
+fun toUTF8String(hand: Hand?): String {
+    if (hand == null) return ""
+    return String(toUTF8(hand))
+}
+
 
 
 object DbSettings {
@@ -40,6 +63,14 @@ object GameState : Table() {
 }
 
 
+fun makeMapKey(insurance: Boolean,
+               split: Hand?,
+               splitAces: Boolean,
+               dealer: Hand,
+               player: Hand): MapKey {
+    return MapKey(toUTF8String(player), toUTF8String(dealer), toUTF8String(split), splitAces, insurance)
+}
+
 fun getHand(
         insurance: Boolean,
         split: Hand?,
@@ -47,6 +78,11 @@ fun getHand(
         dealer: Hand,
         player: Hand
 ): List<Pair<Action, BigDecimal>>? {
+    val fetched = map[makeMapKey(insurance, split, splitAces, dealer, player)]
+    if (fetched != null) {
+        logger.info("Cache map hit")
+        return fetched
+    }
     DbSettings.db
     val resultRow = transaction {
         GameState.select {
@@ -77,24 +113,42 @@ fun insertHand(
         player: Hand,
         calculations: List<Pair<Action, BigDecimal>>) {
 
-    val calculationMap = calculations.map {
-        it.first to it.second
-    }.toMap()
-    DbSettings.db
-    transaction {
-        GameState.insert {
-            it[GameState.insurance] = insurance
-            it[GameState.split] = if (split == null) "" else toUTF8(split).toString(Charset.defaultCharset())
-            it[GameState.player] = toUTF8(player).toString(Charset.defaultCharset())
-            it[GameState.dealer] = toUTF8(dealer)[0].toChar()
-            it[GameState.splitAces] = splitAces
-            it[actionHit] = if (calculationMap.getOrDefault(Action.HIT, null) != null) calculationMap.getOrDefault(Action.HIT, BigDecimal(0)).toDouble() else null
-            it[actionDouble] = if (calculationMap.getOrDefault(Action.DOUBLE, null) != null) calculationMap.getOrDefault(Action.DOUBLE, BigDecimal(0)).toDouble() else null
-            it[actionSplit] = if (calculationMap.getOrDefault(Action.SPLIT, null) != null) calculationMap.getOrDefault(Action.SPLIT, BigDecimal(0)).toDouble() else null
-            it[actionInsurance] = if (calculationMap.getOrDefault(Action.INSURANCE, null) != null) calculationMap.getOrDefault(Action.INSURANCE, BigDecimal(0)).toDouble() else null
-            it[actionStand] = if (calculationMap.getOrDefault(Action.STAND, null) != null) calculationMap.getOrDefault(Action.STAND, BigDecimal(0)).toDouble() else null
-        }
+    if (map.size < MAX_MAP_ENTRIES) {
+        logger.info("Inserting into map")
+        map[makeMapKey(insurance, split, splitAces, dealer, player)] = calculations
+        return
     }
+
+    logger.info("Map reached threshold, batch inserting")
+
+
+    DbSettings.db
+    lock.lock()
+    try {
+        transaction {
+            GameState.batchInsert(map.entries) { entry ->
+                val (mapKey, rowCalculations) = entry
+                val calculationMap = rowCalculations.map {
+                    it.first to it.second
+                }.toMap()
+                val (playerString, dealerString, splitString, splitAcesRow, insuranceRow) = mapKey
+                this[GameState.insurance] = insuranceRow
+                this[GameState.split] = splitString ?: ""
+                this[GameState.player] = playerString
+                this[GameState.dealer] = dealerString[0]
+                this[GameState.splitAces] = splitAcesRow
+                this[actionHit] = calculationMap[Action.HIT]?.toDouble()
+                this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
+                this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()
+                this[actionInsurance] = calculationMap[Action.INSURANCE]?.toDouble()
+                this[actionStand] = calculationMap[Action.STAND]?.toDouble()
+            }
+        }
+    } finally {
+        lock.unlock()
+    }
+    logger.info("Clearing map")
+    map.clear()
 
 
 }

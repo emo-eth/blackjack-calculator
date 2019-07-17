@@ -130,5 +130,13 @@ object HandCalculatorTest : Spek({
             assertThat(overall.toDouble()).isStrictlyBetween(-1.0, 0.0)
         }
 
+        test("Batching") {
+            val playerHand = fromCards(Card.FIVE, Card.NINE)
+            val playerSplit = fromCards(Card.FIVE, Card.FIVE, Card.FIVE)
+            val dealerHand = fromCard(Card.FIVE)
+            val shoe = fromHands(6, playerHand, dealerHand, playerSplit)
+            val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, playerSplit, false, false)
+        }
+
     }
 })
