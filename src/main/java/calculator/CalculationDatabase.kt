@@ -22,7 +22,7 @@ import java.util.logging.Logger
 data class MapKey(val playerHandString: String, val dealerHand: String, val split: String?, val splitAces: Boolean, val insurance: Boolean)
 
 val map: ConcurrentMap<MapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
-val MAX_MAP_ENTRIES = 100
+val MAX_MAP_ENTRIES = 20
 private val lock = ReentrantLock()
 private val logger: Logger = Logger.getLogger("CalculationDatabase")
 

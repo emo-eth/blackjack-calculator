@@ -3,6 +3,7 @@ package calculator
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.logging.Logger
+import java.util.stream.Collectors
 
 private val logger: Logger = Logger.getLogger("HandCalculator")
 
@@ -67,8 +68,8 @@ fun getActionsAndScores(playerHand: Hand,
             actions.isEmpty()
     ) {
         logger.info("Computing hand ${String(toUTF8(playerHand))} ${if (split == null) "" else String(toUTF8(split))} ${String(toUTF8(dealerHand))} $insurance $splitAces")
-        val calculatedActions: MutableList<Pair<Action, BigDecimal>> = mutableListOf()
-        for (action in possibleActions) {
+        val calculatedActions = possibleActions.parallelStream().map {
+            action ->
             val score = evaluateAction(
                     action,
                     playerHand,
@@ -77,10 +78,10 @@ fun getActionsAndScores(playerHand: Hand,
                     double,
                     split,
                     splitAces,
-                    insurance
-            )
-            calculatedActions.add(Pair(action, score))
-        }
+                    insurance)
+            Pair(action, score)
+        }.collect(Collectors.toList())
+
         // sort descending
         calculatedActions.sortBy { x -> -x.second }
 
