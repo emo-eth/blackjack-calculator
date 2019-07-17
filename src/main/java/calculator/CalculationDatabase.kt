@@ -144,11 +144,11 @@ fun insertHand(
                 this[actionStand] = calculationMap[Action.STAND]?.toDouble()
             }
         }
+        map.clear()
     } finally {
         lock.unlock()
     }
     logger.info("Clearing map")
-    map.clear()
 
 
 }
