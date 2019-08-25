@@ -36,11 +36,11 @@ fun toUTF8String(hand: Hand?): String {
 object DbSettings {
     val db by lazy {
         val dataSource = PGPoolingDataSource()
-        dataSource.databaseName = "jameswenzel"
-        dataSource.user = "jameswenzel"
-        dataSource.portNumber = 5432
-        dataSource.serverName = "localhost"
-        dataSource.password = null
+        dataSource.databaseName = System.getenv("POSTGRES_DATABASE")
+        dataSource.user = System.getenv("POSTGRES_USER")
+        dataSource.portNumber = System.getenv("POSTGRES_PORT").toInt()
+        dataSource.serverName = System.getenv("POSTGRES_HOST")
+        dataSource.password = System.getenv("POSTGRES_PASSWORD")
         dataSource.maxConnections = 300
         Database.connect(dataSource)
     }
