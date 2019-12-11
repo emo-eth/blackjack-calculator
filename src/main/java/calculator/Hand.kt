@@ -11,6 +11,10 @@ class Hand : Iterable<Byte> {
             return Hand(card)
         }
 
+        fun combineHands(hand: Hand, otherHand: Hand): Hand {
+            return Hand(byteArrayOf(*hand.getBytes(), *otherHand.getBytes()))
+        }
+
         fun fromUtf8(hand: ByteArray): Hand {
             return Hand(hand.map { (it - 0x30).toByte() }.toByteArray())
         }
@@ -34,7 +38,6 @@ class Hand : Iterable<Byte> {
         this.hand = byteArrayOf(card.num)
         size = hand.size
     }
-
 
     fun addCard(card: Card): Hand {
         val newHand = byteArrayOf(*hand, card.num)
@@ -91,6 +94,10 @@ class Hand : Iterable<Byte> {
 
     override fun hashCode(): Int {
         return hand.contentHashCode()
+    }
+
+    private fun getBytes(): ByteArray {
+        return hand
     }
 
 }
