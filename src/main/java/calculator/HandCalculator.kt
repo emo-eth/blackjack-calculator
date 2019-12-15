@@ -19,22 +19,22 @@ fun getAllPossibleActions(
         if (playerHand.size == 1) return listOf(Action.HIT)
         if (playerHand.size == 2) return actions
     }
-    if (getPreferredValue(playerHand) < 21) {
+    if (playerHand.getPreferredValue() < 21) {
         actions.add(Action.HIT)
         if (playerHand.size == 2) {
-            if (getPreferredValue(playerHand) < 21) actions.add(Action.DOUBLE)
+            if (playerHand.getPreferredValue() < 21) actions.add(Action.DOUBLE)
             if (split == null && playerHand.size == 2 && playerHand[0] == playerHand[1])
                 actions.add(Action.SPLIT)
         }
-        if (!insurance && isSoft(dealerHand) && playerHand.size == 2)
+        if (!insurance && dealerHand.isSoft() && playerHand.size == 2)
             actions.add(Action.INSURANCE)
     }
     return actions
 }
 
 fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
-    val newPlayerHand = addCard(card, playerHand)
-    val newShoe = removeCard(card, shoe)
+    val newPlayerHand = playerHand.addCard(card)
+    val newShoe = shoe.removeCard(card)
     return Pair(newPlayerHand, newShoe)
 }
 
@@ -67,7 +67,7 @@ fun getActionsAndScores(playerHand: Hand,
             actions == null ||
             actions.isEmpty()
     ) {
-        logger.info("Computing hand ${String(toUTF8(playerHand))} ${if (split == null) "" else String(toUTF8(split))} ${String(toUTF8(dealerHand))} $insurance $splitAces")
+        logger.info("Computing hand ${String(playerHand.toUTF8())} ${if (split == null) "" else String(split.toUTF8())} ${String(dealerHand.toUTF8())} $insurance $splitAces")
         val calculatedActions = possibleActions.parallelStream().map {
             action ->
             val score = evaluateAction(
@@ -154,9 +154,9 @@ fun evaluateAction(
         insurance: Boolean
 ): BigDecimal {
     if (action == Action.STAND) {
-        val playerValue = getPreferredValue(playerHand)
+        val playerValue = playerHand.getPreferredValue()
         return scoreHand(
-                getPreferredValue(playerHand),
+                playerHand.getPreferredValue(),
                 dealerHand,
                 Card.fromByte(dealerHand[0]),
                 shoe,
@@ -167,7 +167,7 @@ fun evaluateAction(
         )
     } else if (action == Action.HIT) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
+        for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
             val (newPlayerHand, newShoe) = doHit(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
@@ -183,7 +183,7 @@ fun evaluateAction(
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.DOUBLE) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
+        for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
             val (newPlayerHand, newShoe) = doDouble(card, playerHand, shoe)
             val (nextAction, score) = getBestAction(
                     newPlayerHand,
@@ -199,15 +199,15 @@ fun evaluateAction(
         return scores.reduce { x, y -> x.plus(y) }
     } else if (action == Action.SPLIT) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe).shuffled()) {
-            val newShoe = removeCard(card, shoe)
-            for ((card2, prob2) in getNextStatesAndProbabilities(newShoe).shuffled()) {
-                val newShoe2 = removeCard(card2, newShoe)
-                val hand1 = fromCards(Card.fromByte(playerHand[0]), card)
-                val hand2 = fromCards(Card.fromByte(playerHand[0]), card2)
+        for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
+            val newShoe = shoe.removeCard(card)
+            for ((card2, prob2) in newShoe.getNextStatesAndProbabilities().shuffled()) {
+                val newShoe2 = newShoe.removeCard(card2)
+                val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
+                val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
                 // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
-                val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, isSoft(playerHand), insurance)
-                val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, isSoft(playerHand), insurance)
+                val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, playerHand.isSoft(), insurance)
+                val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, playerHand.isSoft(), insurance)
                 scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
             }
         }

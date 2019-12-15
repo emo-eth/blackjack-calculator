@@ -10,12 +10,12 @@ object BlackJackGameTest : Spek({
 
         test("Agent calculates utility in hands properly") {
 
-            var shoe = fromCounts(Pair(Card.TWO, 1), Pair(Card.TEN, 1))
+            var shoe = Shoe.fromCounts(Pair(Card.TWO, 1), Pair(Card.TEN, 1))
 
-            var playerHand = fromCards(Card.TEN, Card.TEN)
-            var dealerHand = fromCards(Card.TEN, Card.FIVE)
+            var playerHand = Hand.fromCards(Card.TEN, Card.TEN)
+            var dealerHand = Hand.fromCards(Card.TEN, Card.FIVE)
             var utility = scoreHand(
-                    getPreferredValue(playerHand),
+                    playerHand.getPreferredValue(),
                     dealerHand,
                     Card.TEN,
                     shoe,
@@ -25,9 +25,9 @@ object BlackJackGameTest : Spek({
                     false
             )
             assertThat(utility.toDouble()).isEqualTo(1.0)
-            shoe = fromCounts(Pair(Card.TEN, 1), Pair(Card.SIX, 1))
+            shoe = Shoe.fromCounts(Pair(Card.TEN, 1), Pair(Card.SIX, 1))
             utility = scoreHand(
-                    getPreferredValue(playerHand),
+                    playerHand.getPreferredValue(),
                     dealerHand,
                     Card.TEN,
                     shoe,
@@ -37,9 +37,9 @@ object BlackJackGameTest : Spek({
                     false
             )
             assertThat(utility.toDouble()).isEqualTo(0.0)
-            var playerHand2 = fromCards(Card.NINE, Card.ACE, Card.ACE)
+            var playerHand2 = Hand.fromCards(Card.NINE, Card.ACE, Card.ACE)
             utility = scoreHand(
-                    getPreferredValue(playerHand2),
+                    playerHand2.getPreferredValue(),
                     dealerHand,
                     Card.TEN,
                     shoe,
@@ -51,7 +51,7 @@ object BlackJackGameTest : Spek({
             assertThat(utility.toDouble()).isEqualTo(0.5)
             dealerHand = playerHand2
             utility = scoreHand(
-                    getPreferredValue(playerHand),
+                    playerHand.getPreferredValue(),
                     dealerHand,
                     Card.ACE,
                     shoe,
@@ -62,7 +62,7 @@ object BlackJackGameTest : Spek({
             )
             assertThat(utility.toDouble()).isEqualTo(-1.0)
             utility = scoreHand(
-                    getPreferredValue(playerHand),
+                    playerHand.getPreferredValue(),
                     dealerHand,
                     Card.ACE,
                     shoe,
@@ -76,8 +76,8 @@ object BlackJackGameTest : Spek({
         }
 
         test("getactions makes sense") {
-            var playerHand = fromCards(Card.ACE, Card.ACE)
-            var dealerHand = fromCards(Card.TEN)
+            var playerHand = Hand.fromCards(Card.ACE, Card.ACE)
+            var dealerHand = Hand.fromCards(Card.TEN)
             var actions = getAllPossibleActions(
                     playerHand,
                     dealerHand,
@@ -97,7 +97,7 @@ object BlackJackGameTest : Spek({
         }
 
         test("calculator.scoreHand returns reasonable values") {
-            var shoe = makeShoe(6)
+            var shoe = Shoe(6)
             assertThat(
                     scoreHand(20, HandHelper.of(Card.TEN.num.toInt()), Card.TEN, shoe, false, false, false, false).toDouble()
             ).isStrictlyBetween(0.0, 1.0)
@@ -111,11 +111,11 @@ object BlackJackGameTest : Spek({
             assertThat(
                     scoreHand(
                             21,
-                            fromCard(fromByte(1)),
+                            Hand.fromCard(fromByte(1)),
                             fromByte(1),
-                            fromHands(6,
-                                    fromCards(*listOf(0, 9).map { fromByte(it.toByte()) }.toTypedArray()),
-                                    fromCard(fromByte(1))),
+                            Shoe.fromHands(6,
+                                    Hand.fromCards(*listOf(0, 9).map { fromByte(it.toByte()) }.toTypedArray()),
+                                    Hand.fromCard(fromByte(1))),
                             true,
                             false,
                             false,
@@ -127,7 +127,7 @@ object BlackJackGameTest : Spek({
                     21,
                     HandHelper.of(1),
                     fromByte(0),
-                    fromHands(6, HandHelper.of(0, 9), HandHelper.of(1)),
+                    Shoe.fromHands(6, HandHelper.of(0, 9), HandHelper.of(1)),
                     true,
                     false,
                     false,
@@ -138,7 +138,7 @@ object BlackJackGameTest : Spek({
                             21,
                             HandHelper.of(0),
                             fromByte(0),
-                            fromHands(6, HandHelper.of(0, 9), HandHelper.of(1)),
+                            Shoe.fromHands(6, HandHelper.of(0, 9), HandHelper.of(1)),
                             true,
                             false,
                             true,
@@ -151,13 +151,13 @@ object BlackJackGameTest : Spek({
 
         // bj, regular dealer
         var score: BigDecimal
-        var player = fromCards(Card.ACE, Card.TEN)
-        var dealer = fromCard(Card.FIVE)
+        var player = Hand.fromCards(Card.ACE, Card.TEN)
+        var dealer = Hand.fromCard(Card.FIVE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.FIVE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 true,
                 false,
                 false,
@@ -166,13 +166,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(1.5)
 
         // bj, ace hole, no insurance
-        player = fromCards(Card.ACE, Card.TEN)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.ACE, Card.TEN)
+        dealer = Hand.fromCard(Card.ACE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 true,
                 false,
                 false,
@@ -181,13 +181,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.5)
 
         // bj, ace hole, insurance
-        player = fromCards(Card.ACE, Card.TEN)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.ACE, Card.TEN)
+        dealer = Hand.fromCard(Card.ACE)
         var insScore = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 true,
                 false,
                 true,
@@ -196,13 +196,13 @@ object BlackJackGameTest : Spek({
         assertThat(insScore.toDouble()).isGreaterThan(score.toDouble())
 
         // both bj, no insurance
-        player = fromCards(Card.ACE, Card.TEN)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.TEN)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 true,
                 false,
                 false,
@@ -211,13 +211,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.0)
 
         // both bj, insurance
-        player = fromCards(Card.ACE, Card.TEN)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.TEN)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 true,
                 false,
                 true,
@@ -226,13 +226,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(1.0)
 
         // 21, no ace hole
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCard(Card.FIVE)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCard(Card.FIVE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.FIVE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 false,
                 false,
                 false,
@@ -241,13 +241,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.0)
 
         // 21, ace hole, no insurance
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCard(Card.ACE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 false,
                 false,
                 false,
@@ -256,13 +256,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.0)
 
         // 21, ace hole, insurance
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCard(Card.ACE)
         insScore = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, player, dealer),
+                Shoe.fromHands(6, player, dealer),
                 false,
                 false,
                 true,
@@ -271,13 +271,13 @@ object BlackJackGameTest : Spek({
         assertThat(insScore.toDouble()).isStrictlyBetween(0.0, 1.0)
 
         // bust, ace hole, no insurance
-        player = fromCards(Card.TEN, Card.NINE, Card.TWO, Card.TWO)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.TEN, Card.NINE, Card.TWO, Card.TWO)
+        dealer = Hand.fromCard(Card.ACE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -286,13 +286,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // bust, ace hole, insurance
-        player = fromCards(Card.TEN, Card.NINE, Card.TWO, Card.TWO)
-        dealer = fromCard(Card.ACE)
+        player = Hand.fromCards(Card.TEN, Card.NINE, Card.TWO, Card.TWO)
+        dealer = Hand.fromCard(Card.ACE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -301,13 +301,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.5)
 
         // player > dealer, no insurance
-        player = fromCards(Card.ACE, Card.NINE)
-        dealer = fromCards(Card.ACE, Card.SIX)
+        player = Hand.fromCards(Card.ACE, Card.NINE)
+        dealer = Hand.fromCards(Card.ACE, Card.SIX)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -316,13 +316,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(1.0)
 
         // player > dealer, insurance
-        player = fromCards(Card.ACE, Card.NINE)
-        dealer = fromCards(Card.ACE, Card.SIX)
+        player = Hand.fromCards(Card.ACE, Card.NINE)
+        dealer = Hand.fromCards(Card.ACE, Card.SIX)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -331,13 +331,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.5)
 
         // player < dealer, no insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.NINE)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.NINE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -346,13 +346,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // player < dealer, insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.NINE)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.NINE)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -361,13 +361,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.5)
 
         // dealer bust, no insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.NINE, Card.TEN, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.NINE, Card.TEN, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -376,13 +376,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(1.0)
 
         // dealer bust, insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.NINE, Card.TEN, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.NINE, Card.TEN, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -391,13 +391,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.5)
 
         // equal, no insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.SIX)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.SIX)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -406,13 +406,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.0)
 
         // equal, insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.SIX)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.SIX)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -421,13 +421,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-0.5)
 
         // dealer 21, no ace hole
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.EIGHT,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -436,13 +436,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // dealer 21, ace hole, insurance
-        player = fromCards(Card.ACE, Card.SIX)
-        dealer = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        player = Hand.fromCards(Card.ACE, Card.SIX)
+        dealer = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -451,13 +451,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.5)
 
         // dealer 21, ace hole, equal, no ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -466,13 +466,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.0)
 
         // dealer 21, ace hole, equal, ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -481,13 +481,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-0.5)
 
         // dealer blackjack, player 21, no ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -499,10 +499,10 @@ object BlackJackGameTest : Spek({
         // dealer blackjack, player 21, ins
 
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 true,
@@ -511,13 +511,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(0.0)
 
         // dealer blackjack, face ace, player 21, double, no ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 true,
                 false,
@@ -526,13 +526,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // dealer blackjack, face ten, player 21, double, no ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.TEN,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 true,
                 false,
@@ -541,13 +541,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-0.5)
 
         // dealer blackjack, face ace, player 21, double, ins
-        player = fromCards(Card.ACE, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.ACE, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.ACE, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.ACE,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 true,
                 true,
@@ -557,13 +557,13 @@ object BlackJackGameTest : Spek({
         // assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // dealer win, double
-        player = fromCards(Card.SEVEN, Card.EIGHT, Card.TWO)
-        dealer = fromCards(Card.EIGHT, Card.TEN)
+        player = Hand.fromCards(Card.SEVEN, Card.EIGHT, Card.TWO)
+        dealer = Hand.fromCards(Card.EIGHT, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.TEN,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 true,
                 false,
@@ -572,13 +572,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(-1.0)
 
         // player win, double
-        player = fromCards(Card.SEVEN, Card.EIGHT, Card.THREE)
-        dealer = fromCards(Card.SEVEN, Card.TEN)
+        player = Hand.fromCards(Card.SEVEN, Card.EIGHT, Card.THREE)
+        dealer = Hand.fromCards(Card.SEVEN, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.TEN,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 true,
                 false,
@@ -587,13 +587,13 @@ object BlackJackGameTest : Spek({
         assertThat(score.toDouble()).isEqualTo(1.0)
 
         // player win, double
-        player = fromCards(Card.ACE, Card.TEN)
-        dealer = fromCards(Card.SEVEN, Card.TEN)
+        player = Hand.fromCards(Card.ACE, Card.TEN)
+        dealer = Hand.fromCards(Card.SEVEN, Card.TEN)
         score = scoreHand(
-                getPreferredValue(player),
+                player.getPreferredValue(),
                 dealer,
                 Card.TEN,
-                fromHands(6, dealer, player),
+                Shoe.fromHands(6, dealer, player),
                 false,
                 false,
                 false,
@@ -605,6 +605,6 @@ object BlackJackGameTest : Spek({
 
 object HandHelper {
     fun of(vararg ints: Int): Hand {
-        return fromCards(*ints.map { fromByte(it.toByte()) }.toTypedArray())
+        return Hand.fromCards(*ints.map { fromByte(it.toByte()) }.toTypedArray())
     }
 }

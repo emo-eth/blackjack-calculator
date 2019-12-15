@@ -2,7 +2,7 @@ package rest
 
 import calculator.Action
 import calculator.Card
-import calculator.fromCards
+import calculator.Hand
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 
@@ -16,8 +16,8 @@ object ActionControllerTest : Spek({
         }
 
         test("fromUtf8") {
-            val hand = fromUtf8("001".toByteArray())
-            assertThat(hand).isEqualTo(fromCards(Card.ACE, Card.ACE, Card.TWO))
+            val hand = Hand.fromUtf8("001".toByteArray())
+            assertThat(hand).isEqualTo(Hand.fromCards(Card.ACE, Card.ACE, Card.TWO))
         }
     }
 })

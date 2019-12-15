@@ -14,17 +14,17 @@ fun main(args: Array<String>) {
 }
 
 fun doForDealerCard(dealerCard: Card) {
-    val shoe = makeShoe(6)
-    val dealer = fromCard(dealerCard)
-    val shoeAfterDealer = removeCard(dealerCard, shoe)
-    val nextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterDealer).shuffled()
+    val shoe = Shoe(6)
+    val dealer = Hand.fromCard(dealerCard)
+    val shoeAfterDealer = shoe.removeCard(dealerCard)
+    val nextStatesAndProbabilities = shoeAfterDealer.getNextStatesAndProbabilities().shuffled()
     for ((playerCard1, prob2) in nextStatesAndProbabilities) {
-        val player1Card = fromCard(playerCard1)
-        val shoeAfterPlayerCard1 = removeCard(playerCard1, shoeAfterDealer)
-        val nextNextStatesAndProbabilities = getNextStatesAndProbabilities(shoeAfterPlayerCard1).shuffled()
+        val player1Card = Hand.fromCard(playerCard1)
+        val shoeAfterPlayerCard1 = shoeAfterDealer.removeCard(playerCard1)
+        val nextNextStatesAndProbabilities = shoeAfterPlayerCard1.getNextStatesAndProbabilities().shuffled()
         for ((playerCard2, prob3) in nextNextStatesAndProbabilities) {
-            val player2Cards = addCard(playerCard2, player1Card)
-            val shoeAfterPlayerCard2 = removeCard(playerCard2, shoeAfterPlayerCard1)
+            val player2Cards = player1Card.addCard(playerCard2)
+            val shoeAfterPlayerCard2 = shoeAfterPlayerCard1.removeCard(playerCard2)
             println("${player2Cards[0]}${player2Cards[1]}, ${dealer[0]}")
             getBestAction(
                     player2Cards,

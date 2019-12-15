@@ -28,7 +28,7 @@ private val logger: Logger = Logger.getLogger("CalculationDatabase")
 
 fun toUTF8String(hand: Hand?): String {
     if (hand == null) return ""
-    return String(toUTF8(hand))
+    return String(hand.toUTF8())
 }
 
 
@@ -87,10 +87,10 @@ fun getHand(
     val resultRow = transaction {
         GameState.select {
             (GameState.insurance.eq(insurance) and
-                    GameState.split.eq(if (split == null) "" else toUTF8(split).toString(Charset.defaultCharset())) and
-                    GameState.dealer.eq(toUTF8(dealer)[0].toChar()) and
+                    GameState.split.eq(if (split == null) "" else split.toUTF8().toString(Charset.defaultCharset())) and
+                    GameState.dealer.eq(dealer.toUTF8()[0].toChar()) and
                     GameState.splitAces.eq(splitAces) and
-                    GameState.player.eq(toUTF8(player).toString(Charset.defaultCharset())))
+                    GameState.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
         }.firstOrNull()
     } ?: return null
 
@@ -159,7 +159,7 @@ fun deleteHand(
     DbSettings.db
     transaction {
         GameState.deleteWhere {
-            GameState.player.eq(toUTF8(player).toString(Charset.defaultCharset()))
+            GameState.player.eq(player.toUTF8().toString(Charset.defaultCharset()))
         }
     }
 }
@@ -178,8 +178,4 @@ fun initialize() {
         }
     }
 
-}
-
-fun toUTF8(hand: Hand): Hand {
-    return hand.map { (it + 0x30).toByte() }.toByteArray()
 }

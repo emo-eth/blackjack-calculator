@@ -8,8 +8,8 @@ import java.math.BigDecimal
 object CalculationDatabaseTest : Spek({
     test("insert and fetch work") {
         initialize()
-        val player = fromCards(Card.TEN, Card.TEN, Card.TEN, Card.TEN)
-        val dealer = fromCard(Card.ACE)
+        val player = Hand.fromCards(Card.TEN, Card.TEN, Card.TEN, Card.TEN)
+        val dealer = Hand.fromCard(Card.ACE)
         val actions = listOf(Pair(Action.STAND, BigDecimal(-1)), Pair(Action.INSURANCE, BigDecimal(-1.5)))
         insertHand(false, null, false, dealer, player, actions)
         val retrievedActions = getHand(false, null, false, dealer, player)

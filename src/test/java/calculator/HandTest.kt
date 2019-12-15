@@ -1,31 +1,31 @@
 package calculator
 
-import calculator.*
+import junit.framework.Assert.assertTrue
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 
 object HandTest : Spek({
     group("calculator.HandTest") {
         test("get values work") {
-            var hand = fromCards(Card.TEN, Card.TEN)
-            assertThat(getPreferredValue(hand)).isEqualTo(20)
-            hand = fromCards(Card.FIVE, Card.ACE)
-            assertThat(getSoftValue(hand)).isEqualTo(16)
-            assertThat(getHardValue(hand)).isEqualTo(6)
-            assertThat(getPreferredValue(hand)).isEqualTo(16)
-            hand = fromCards(Card.ACE, Card.ACE)
-            assertThat(getPreferredValue(hand)).isEqualTo(12)
+            var hand = Hand.fromCards(Card.TEN, Card.TEN)
+            assertThat(hand.getPreferredValue()).isEqualTo(20)
+            hand = Hand.fromCards(Card.FIVE, Card.ACE)
+            assertThat(hand.getSoftValue()).isEqualTo(16)
+            assertThat(hand.getHardValue()).isEqualTo(6)
+            assertThat(hand.getPreferredValue()).isEqualTo(16)
+            hand = Hand.fromCards(Card.ACE, Card.ACE)
+            assertThat(hand.getPreferredValue()).isEqualTo(12)
         }
 
         test("calculator.isSoft") {
-            val hand = fromCards(Card.FIVE, Card.ACE)
-            assertThat(isSoft(hand)).isTrue()
+            val hand = Hand.fromCards(Card.FIVE, Card.ACE)
+            assertThat(hand.isSoft()).isTrue()
         }
 
         test("add card sorts") {
-            var hand = fromCards(Card.FIVE, Card.ACE)
-            assertThat(isSoft(hand)).isTrue()
-            hand = addCard(Card.TWO, hand)
+            var hand = Hand.fromCards(Card.FIVE, Card.ACE)
+            assertTrue(hand.isSoft())
+            hand = hand.addCard(Card.TWO)
             assertThat(hand[1]).isEqualTo(Card.TWO.num)
         }
     }

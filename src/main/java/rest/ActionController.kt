@@ -1,7 +1,7 @@
 package rest
 
 import calculator.Hand
-import calculator.fromHands
+import calculator.Shoe
 import calculator.getBestAction
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -15,17 +15,13 @@ class ActionController {
     @GetMapping("/action")
     fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "insurance") insurance: Boolean): ActionResponse {
         logger.info("GET $player, $split, $dealer, $insurance")
-        val playerHand = fromUtf8(player.toByteArray())
-        val dealerHand = fromUtf8(dealer.toByteArray())
-        val splitHand = if (split == null) null else fromUtf8(split.toByteArray())
-        val shoe = if (splitHand == null) fromHands(6, playerHand, dealerHand) else fromHands(6, playerHand, dealerHand, splitHand)
+        val playerHand = Hand.fromUtf8(player.toByteArray())
+        val dealerHand = Hand.fromUtf8(dealer.toByteArray())
+        val splitHand = if (split == null) null else Hand.fromUtf8(split.toByteArray())
+        val shoe = if (splitHand == null) Shoe.fromHands(6, playerHand, dealerHand) else Shoe.fromHands(6, playerHand, dealerHand, splitHand)
         val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, splitHand, false, insurance)
         return ActionResponse(action, score.toDouble())
 
     }
 
-}
-
-fun fromUtf8(hand: ByteArray): Hand {
-    return hand.map { (it - 0x30).toByte() }.toByteArray()
 }

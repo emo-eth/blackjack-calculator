@@ -23,9 +23,9 @@ fun scoreHand(
     }
     if (dealerShouldHit(dealerHand)) {
         val scores: MutableList<BigDecimal> = mutableListOf()
-        for ((card, prob) in getNextStatesAndProbabilities(shoe)) {
-            val newShoe = removeCard(card, shoe)
-            val newDealerHand = addCard(card, dealerHand)
+        for ((card, prob) in shoe.getNextStatesAndProbabilities()) {
+            val newShoe = shoe.removeCard(card)
+            val newDealerHand = dealerHand.addCard(card)
             val score = scoreHand(
                     playerValue,
                     newDealerHand,
@@ -43,7 +43,7 @@ fun scoreHand(
     return BigDecimal(
             getUtility(
                     playerValue,
-                    getPreferredValue(dealerHand),
+                    dealerHand.getPreferredValue(),
                     dealerHand.size,
                     dealerStartingCard,
                     blackJackVar,
@@ -55,7 +55,7 @@ fun scoreHand(
 }
 
 fun dealerShouldHit(dealerHand: Hand): Boolean {
-    return getPreferredValue(dealerHand) < 17
+    return dealerHand.getPreferredValue() < 17
 }
 
 fun shouldHitAfterSplit(playerHand: Hand, split: Boolean): Boolean {
@@ -64,7 +64,7 @@ fun shouldHitAfterSplit(playerHand: Hand, split: Boolean): Boolean {
 
 fun canHit(playerHand: Hand, double: Boolean, splitAces: Boolean): Boolean {
     return (
-            (!double && !splitAces && getPreferredValue(playerHand) < 21) ||
+            (!double && !splitAces && playerHand.getPreferredValue() < 21) ||
                     playerHand.size == 1
             )
 }
@@ -89,7 +89,7 @@ fun canInsure(
         insurance: Boolean
 ): Boolean {
     // limit insurance to first turn
-    return !insurance && !double && isSoft(dealerHand) && playerHand.size == 2
+    return !insurance && !double && dealerHand.isSoft() && playerHand.size == 2
 }
 
 fun getUtility(
