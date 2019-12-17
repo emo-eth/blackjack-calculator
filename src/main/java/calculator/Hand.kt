@@ -28,21 +28,20 @@ class Hand : Iterable<Byte> {
         size = hand.size
     }
 
+    constructor(card: Card) {
+        this.hand = byteArrayOf(card.num)
+        size = hand.size
+    }
+
     private constructor(hand: ByteArray) {
         this.hand = hand
         this.hand.sort()
         size = hand.size
     }
 
-    constructor(card: Card) {
-        this.hand = byteArrayOf(card.num)
-        size = hand.size
-    }
-
     fun addCard(card: Card): Hand {
-        val newHand = byteArrayOf(*hand, card.num)
-        newHand.sort()
-        return Hand(newHand)
+        val iterator = sequenceAdder(hand, card).iterator()
+        return Hand(ByteArray(hand.size + 1) { iterator.next() })
     }
 
     fun isSoft(): Boolean {
@@ -100,4 +99,24 @@ class Hand : Iterable<Byte> {
         return hand
     }
 
+}
+
+fun sequenceAdder(hand: ByteArray, newCard: Card): Sequence<Byte> = sequence {
+    var yieldedCard = false
+    val iter = hand.iterator()
+    while (iter.hasNext()) {
+        val cardVal = iter.next()
+        if (cardVal > newCard.num) {
+            yield(newCard.num)
+            yieldedCard = true
+            yield(cardVal)
+            break
+        } else {
+            yield(cardVal)
+        }
+    }
+    yieldAll(iter)
+    if (!yieldedCard) {
+        yield(newCard.num)
+    }
 }
