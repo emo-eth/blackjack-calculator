@@ -1,6 +1,5 @@
 package calculator
 
-//typealias Hand = ByteArray
 
 class Hand : Iterable<Byte> {
     companion object {
@@ -27,6 +26,7 @@ class Hand : Iterable<Byte> {
 
     private constructor(hand: ByteArray) {
         this.hand = hand
+        this.hand.sort()
         size = hand.size
     }
 
@@ -92,6 +92,5 @@ class Hand : Iterable<Byte> {
     override fun hashCode(): Int {
         return hand.contentHashCode()
     }
-
 
 }
