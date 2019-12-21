@@ -28,14 +28,14 @@ class Hand : Iterable<Byte> {
         size = hand.size
     }
 
-    constructor(card: Card) {
-        this.hand = byteArrayOf(card.num)
-        size = hand.size
-    }
-
     private constructor(hand: ByteArray) {
         this.hand = hand
         this.hand.sort()
+        size = hand.size
+    }
+
+    constructor(card: Card) {
+        this.hand = byteArrayOf(card.num)
         size = hand.size
     }
 
