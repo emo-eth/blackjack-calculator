@@ -1,21 +1,18 @@
 package calculator.classic
 
 import calculator.Action
-import calculator.classic.GameStateClassic
 import calculator.Hand
-import calculator.classic.GameStateClassic.actionDouble
-import calculator.classic.GameStateClassic.actionHit
-import calculator.classic.GameStateClassic.actionInsurance
-import calculator.classic.GameStateClassic.actionSplit
-import calculator.classic.GameStateClassic.actionStand
-import calculator.classic.GameStateClassic.dealer
-import calculator.classic.GameStateClassic.insurance
-import calculator.classic.GameStateClassic.player
-import calculator.classic.GameStateClassic.split
-import calculator.classic.GameStateClassic.splitAces
+import calculator.classic.GameStateClassicModel.actionDouble
+import calculator.classic.GameStateClassicModel.actionHit
+import calculator.classic.GameStateClassicModel.actionInsurance
+import calculator.classic.GameStateClassicModel.actionSplit
+import calculator.classic.GameStateClassicModel.actionStand
+import calculator.classic.GameStateClassicModel.dealer
+import calculator.classic.GameStateClassicModel.insurance
+import calculator.classic.GameStateClassicModel.player
+import calculator.classic.GameStateClassicModel.split
+import calculator.classic.GameStateClassicModel.splitAces
 
-import calculator.dealer.DealerProbabilities
-import calculator.dealer.DealerProbabilitiesModel
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource
@@ -30,7 +27,7 @@ import java.util.logging.Logger
 data class MapKey(val playerHandString: String, val dealerHand: String, val split: String?, val splitAces: Boolean, val insurance: Boolean)
 
 
-object GameStateClassic : Table() {
+object GameStateClassicModel : Table() {
     val player = varchar("player", 22).index()
     val dealer = char("dealer").index()
     val split = varchar("split", 22)
@@ -43,7 +40,7 @@ object GameStateClassic : Table() {
     val actionInsurance = double("action_insurance").nullable()
 }
 
-class GameStateClassicModel {
+class GameStateClassic {
     companion object {
         val db = {
             val dataSource = PGPoolingDataSource()
@@ -83,7 +80,7 @@ class GameStateClassicModel {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            SchemaUtils.create(GameStateClassic)
+            SchemaUtils.create(GameStateClassicModel)
             try {
                 exec(SchemaUtils.createIndex(Index(listOf(player, dealer, split), false))[0])
             } catch (ex: Exception) {
@@ -124,12 +121,12 @@ class GameStateClassicModel {
             return fetched
         }
         val resultRow = transaction {
-            GameStateClassic.select {
-                (GameStateClassic.insurance.eq(insurance) and
-                        GameStateClassic.split.eq(if (split == null) "" else split.toUTF8().toString(Charset.defaultCharset())) and
-                        GameStateClassic.dealer.eq(dealer.toUTF8()[0].toChar()) and
-                        GameStateClassic.splitAces.eq(splitAces) and
-                        GameStateClassic.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
+            GameStateClassicModel.select {
+                (GameStateClassicModel.insurance.eq(insurance) and
+                        GameStateClassicModel.split.eq(if (split == null) "" else split.toUTF8().toString(Charset.defaultCharset())) and
+                        GameStateClassicModel.dealer.eq(dealer.toUTF8()[0].toChar()) and
+                        GameStateClassicModel.splitAces.eq(splitAces) and
+                        GameStateClassicModel.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
             }.firstOrNull()
         } ?: return null
 
@@ -161,17 +158,17 @@ class GameStateClassicModel {
         lock.lock()
         try {
             transaction {
-                GameStateClassic.batchInsert(batchInsertMap.entries, true) { entry ->
+                GameStateClassicModel.batchInsert(batchInsertMap.entries, true) { entry ->
                     val (mapKey, rowCalculations) = entry
                     val calculationMap = rowCalculations.map {
                         it.first to it.second
                     }.toMap()
                     val (playerString, dealerString, splitString, splitAcesRow, insuranceRow) = mapKey
-                    this[GameStateClassic.insurance] = insuranceRow
-                    this[GameStateClassic.split] = splitString ?: ""
-                    this[GameStateClassic.player] = playerString
-                    this[GameStateClassic.dealer] = dealerString[0]
-                    this[GameStateClassic.splitAces] = splitAcesRow
+                    this[GameStateClassicModel.insurance] = insuranceRow
+                    this[GameStateClassicModel.split] = splitString ?: ""
+                    this[GameStateClassicModel.player] = playerString
+                    this[GameStateClassicModel.dealer] = dealerString[0]
+                    this[GameStateClassicModel.splitAces] = splitAcesRow
                     this[actionHit] = calculationMap[Action.HIT]?.toDouble()
                     this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
                     this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()
@@ -192,8 +189,8 @@ class GameStateClassicModel {
             player: Hand
     ) {
         transaction {
-            GameStateClassic.deleteWhere {
-                GameStateClassic.player.eq(player.toUTF8().toString(Charset.defaultCharset()))
+            GameStateClassicModel.deleteWhere {
+                GameStateClassicModel.player.eq(player.toUTF8().toString(Charset.defaultCharset()))
             }
         }
     }
@@ -201,7 +198,7 @@ class GameStateClassicModel {
     fun flushCache() {
         try {
             transaction {
-                GameStateClassic.batchInsert(batchInsertMap.entries, true) { entry ->
+                GameStateClassicModel.batchInsert(batchInsertMap.entries, true) { entry ->
                     val (mapKey, rowCalculations) = entry
                     val calculationMap = rowCalculations.map {
                         it.first to it.second

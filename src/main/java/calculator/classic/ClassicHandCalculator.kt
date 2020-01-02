@@ -11,7 +11,7 @@ val DOUBLE_RANGE = IntRange(9,11)
 object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
     private val logger: Logger = Logger.getLogger("HandCalculator")
     private val db = {
-        val db = GameStateClassicModel()
+        val db = GameStateClassic()
 //        db.loadInsertCacheSet()
         db
     }()

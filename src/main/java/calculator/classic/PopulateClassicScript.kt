@@ -7,7 +7,7 @@ import java.math.BigDecimal
 
 
 fun main(args: Array<String>) {
-    val db = GameStateClassicModel()
+    val db = GameStateClassic()
     db.initialize()
     println(args[0].toInt())
     println(Runtime.getRuntime().availableProcessors())
