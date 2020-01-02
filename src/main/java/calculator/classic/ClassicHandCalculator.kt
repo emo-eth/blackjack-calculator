@@ -1,9 +1,6 @@
 package calculator.classic
 
-import calculator.Action
-import calculator.Card
-import calculator.Hand
-import calculator.Shoe
+import calculator.*
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.logging.Logger
@@ -11,7 +8,7 @@ import java.util.stream.Collectors
 
 val DOUBLE_RANGE = IntRange(9,11)
 
-object ClassicHandCalculator {
+object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
     private val logger: Logger = Logger.getLogger("HandCalculator")
     private val db = {
         val db = GameStateClassicModel()
@@ -33,10 +30,10 @@ object ClassicHandCalculator {
         }
 
         // we don't care about double and splitAces here because this state is reachable regardless
-        if (BlackJackClassicGame.canHit(playerHand, false, false)) actions.add(Action.HIT)
-        if (BlackJackClassicGame.canDouble(playerHand, false, false)) actions.add(Action.DOUBLE)
-        if (BlackJackClassicGame.canSplit(playerHand, split)) actions.add(Action.SPLIT)
-//        if (BlackJackClassicGame.canInsure(playerHand, dealerHand, split, insurance)) actions.add(Action.INSURANCE)
+        if (game.canHit(playerHand, false, false)) actions.add(Action.HIT)
+        if (game.canDouble(playerHand, false, false)) actions.add(Action.DOUBLE)
+        if (game.canSplit(playerHand, split)) actions.add(Action.SPLIT)
+//        if (game.canInsure(playerHand, dealerHand, split, insurance)) actions.add(Action.INSURANCE)
 
         return actions
     }
@@ -133,20 +130,20 @@ object ClassicHandCalculator {
             Action.STAND -> true
             Action.HIT ->
                 // playerHand value will always be <21 at this stage
-                BlackJackClassicGame.canHit(playerHand, double, splitAces)
+                game.canHit(playerHand, double, splitAces)
             Action.DOUBLE ->
-                BlackJackClassicGame.canDouble(playerHand, double, splitAces)
+                game.canDouble(playerHand, double, splitAces)
             Action.INSURANCE -> // todo: consider always passing false
                 false
-//                BlackJackClassicGame.canInsure(playerHand, dealerHand, split, insurance)
+//                game.canInsure(playerHand, dealerHand, split, insurance)
             Action.SPLIT ->
-                BlackJackClassicGame.canSplit(playerHand, split)
+                game.canSplit(playerHand, split)
             Action.SURRENDER ->
                 false
         }
     }
 
-    fun evaluateAction(
+    override fun evaluateAction(
             action: Action,
             playerHand: Hand,
             dealerHand: Hand,
@@ -159,13 +156,13 @@ object ClassicHandCalculator {
         return when (action) {
             (Action.STAND) -> {
                 val playerValue = playerHand.getPreferredValue()
-                BlackJackClassicGame.scoreHand(
+                game.scoreHand(
                         playerHand,
                         split,
                         dealerHand,
                         Card.fromByte(dealerHand[0]),
                         shoe,
-                        playerValue == 21 && playerHand.size == 2,
+                        playerValue == 21 && playerHand.size == 2 && !splitAces,
                         double,
                         insurance,
                         splitAces

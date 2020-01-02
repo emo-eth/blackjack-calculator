@@ -13,7 +13,9 @@ import java.math.BigDecimal
 object BlackJackClassicGame : AbstractBlackJackGame() {
 
     val db by lazy {
-        DealerProbabilitiesModel()
+        val db = DealerProbabilitiesModel()
+        db.loadFullCacheMap()
+        db
     }
     // https://boardgames.stackexchange.com/questions/27181/blackjack-if-youre-insured-and-bust-do-you-collect-on-the-insurance
 
@@ -28,14 +30,12 @@ object BlackJackClassicGame : AbstractBlackJackGame() {
             insurance: Boolean,
             splitAces: Boolean
     ): BigDecimal {
-        var blackJackVar = blackJack
-        if (splitAces) blackJackVar = false
         // player bust
         if (playerHand.getPreferredValue() > 21) {
             return BigDecimal(-1)
         }
         // unqualified blackjack
-        if (blackJackVar && (dealerStartingCard != Card.ACE && dealerStartingCard != Card.TEN)) {
+        if (blackJack && (dealerStartingCard != Card.ACE && dealerStartingCard != Card.TEN)) {
             return BigDecimal(1.5)
         }
 
@@ -44,16 +44,13 @@ object BlackJackClassicGame : AbstractBlackJackGame() {
                 splitHand,
                 dealerHand,
                 dealerStartingCard,
-                blackJackVar,
+                blackJack,
                 insurance,
                 shoe))
     }
 
     override fun dealerShouldHit(dealerHand: Hand): Boolean {
-        if (dealerHand.isSoft()) {
-            return dealerHand.getPreferredValue() <= 17
-        }
-        return dealerHand.getPreferredValue() < 17
+        return dealerHand.getPreferredValue() <= 17 && dealerHand.getHardValue() != 17
     }
 
     override fun canDouble(
@@ -64,15 +61,7 @@ object BlackJackClassicGame : AbstractBlackJackGame() {
         return !double && !splitAces && playerHand.size == 2 && (DOUBLE_RANGE.contains(playerHand.getPreferredValue()) || DOUBLE_RANGE.contains(playerHand.getHardValue()))
     }
 
-    fun getExpectedUtility(
-            playerHand: Hand,
-            split: Hand?,
-            dealerHand: Hand,
-            dealerStartingCard: Card,
-            blackJack: Boolean,
-            insurance: Boolean,
-            shoe: Shoe
-    ): Double {
+    override fun getExpectedUtility(playerHand: Hand, split: Hand?, dealerHand: Hand, dealerStartingCard: Card, blackJack: Boolean, insurance: Boolean, shoe: Shoe): Double {
         // handle player blackjack exceptions
         if (blackJack) {
             // handle case when dealer gets blackjack on player blackjack

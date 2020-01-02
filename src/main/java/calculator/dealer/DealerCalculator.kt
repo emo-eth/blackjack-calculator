@@ -6,51 +6,6 @@ import calculator.Shoe
 import java.math.BigDecimal
 
 val db = DealerProbabilitiesModel()
-//
-//fun calculateSingleHands(playerHand: Hand, dealerCard: Card, shoe: Shoe) {
-//    // todo: remember to remove dealer card from shoe
-//    for (next in shoe.getNextStatesAndProbabilities().shuffled()) {
-//        val card = next.first
-//        val newHand = playerHand.addCard(card)
-//        val newShoe = shoe.removeCard(card)
-//        if (handFinished(newHand)) {
-//            calculateAndInsertDealerProbs(newHand, dealerCard, newShoe)
-//        }
-//        // handUnfinished is not the opposite of handFinished,
-//        // plus we want to hit no matter what if < 21
-//        if (handUnfinished(newHand)) {
-//            calculateSingleHands(newHand, dealerCard, newShoe)
-//        }
-//    }
-//}
-//
-//fun calculateSplitHands(playerHand: Hand, splitHand: Hand, dealerCard: Card, shoe: Shoe) {
-//    for (next in shoe.getNextStatesAndProbabilities().shuffled()) {
-//        val card = next.first
-//        val newHand = playerHand.addCard(card)
-//        val newShoe = shoe.removeCard(card)
-//        if (handFinished(newHand)) {
-//            if (handFinished(splitHand)) {
-//                // insert
-//                calculateAndInsertDealerProbs(Hand.combineHands(playerHand, splitHand), dealerCard, newShoe)
-//            } else {
-//                calculateSplitHands(splitHand, newHand, dealerCard, newShoe)
-//            }
-//        }
-//        if (handUnfinished(newHand)) {
-//            calculateSplitHands(newHand, splitHand, dealerCard, newShoe)
-//        }
-//    }
-//}
-//
-//fun handFinished(hand: Hand): Boolean {
-//    val preferredVal = hand.getPreferredValue()
-//    return IntRange(11, 21).contains(preferredVal)
-//}
-//
-//fun handUnfinished(hand: Hand): Boolean {
-//    return hand.getPreferredValue() < 21
-//}
 
 fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe) {
     val dealerProbs = getDealerResultProbs(dealerCard, shoe)
