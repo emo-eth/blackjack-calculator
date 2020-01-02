@@ -1,6 +1,9 @@
 package calculator
 
-import calculator.*
+import calculator.platipus.deleteHand
+import calculator.platipus.getHand
+import calculator.platipus.initialize
+import calculator.platipus.insertHand
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import java.math.BigDecimal

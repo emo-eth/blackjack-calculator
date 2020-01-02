@@ -1,5 +1,9 @@
-package calculator
+package calculator.platipus
 
+import calculator.Action
+import calculator.Card
+import calculator.Hand
+import calculator.Shoe
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.logging.Logger
@@ -22,7 +26,7 @@ fun getAllPossibleActions(
     if (playerHand.getPreferredValue() < 21) {
         actions.add(Action.HIT)
         if (playerHand.size == 2) {
-            if (playerHand.getPreferredValue() < 21) actions.add(Action.DOUBLE)
+            actions.add(Action.DOUBLE)
             if (split == null && playerHand.size == 2 && playerHand[0] == playerHand[1])
                 actions.add(Action.SPLIT)
         }

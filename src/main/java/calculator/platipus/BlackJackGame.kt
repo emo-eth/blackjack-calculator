@@ -1,5 +1,8 @@
-package calculator
+package calculator.platipus
 
+import calculator.Card
+import calculator.Hand
+import calculator.Shoe
 import java.math.BigDecimal
 
 fun scoreHand(

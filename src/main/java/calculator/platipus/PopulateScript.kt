@@ -1,4 +1,8 @@
-package calculator
+package calculator.platipus
+
+import calculator.Card
+import calculator.Hand
+import calculator.Shoe
 
 fun main(args: Array<String>) {
     initialize()

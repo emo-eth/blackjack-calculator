@@ -1,13 +1,15 @@
-package calculator
+package calculator.platipus
 
-import calculator.GameState.actionDouble
-import calculator.GameState.actionHit
-import calculator.GameState.actionInsurance
-import calculator.GameState.actionSplit
-import calculator.GameState.actionStand
-import calculator.GameState.dealer
-import calculator.GameState.player
-import calculator.GameState.split
+import calculator.Action
+import calculator.Hand
+import calculator.platipus.GameState.actionDouble
+import calculator.platipus.GameState.actionHit
+import calculator.platipus.GameState.actionInsurance
+import calculator.platipus.GameState.actionSplit
+import calculator.platipus.GameState.actionStand
+import calculator.platipus.GameState.dealer
+import calculator.platipus.GameState.player
+import calculator.platipus.GameState.split
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource

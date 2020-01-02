@@ -10,5 +10,8 @@ object ShoeTest : Spek({
             val nextStates = shoe.getNextStatesAndProbabilities()
             assertThat(nextStates.size).isEqualTo(2)
         }
+        test("getNextStatesAndProbabilities") {
+            throw NotImplementedError()
+        }
     }
 })

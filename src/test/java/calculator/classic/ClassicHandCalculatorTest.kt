@@ -1,18 +1,22 @@
-package calculator
+package calculator.classic
 
-import calculator.platipus.getBestAction
+import calculator.Action
+import calculator.Card
+import calculator.Hand
+import calculator.Shoe
+import calculator.classic.ClassicHandCalculator.getBestAction
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.dsl.Skip
 import java.math.BigDecimal
 
-object HandCalculatorTest : Spek({
+object ClassicHandCalculatorTest : Spek({
     group("handCalculatorTest") {
 
         test("Stand on BJ") {
             val playerHand = Hand.fromCards(Card.TEN, Card.ACE)
             val dealerHand = Hand.fromCard(Card.TWO)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
             val (action, score) = getBestAction(
                     playerHand,
                     dealerHand,
@@ -30,7 +34,7 @@ object HandCalculatorTest : Spek({
 
             val playerHand = Hand.fromCards(Card.TEN, Card.TEN)
             val dealerHand = Hand.fromCard(Card.TWO)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
             val (action, score) = getBestAction(
                     playerHand,
                     dealerHand,
@@ -47,7 +51,7 @@ object HandCalculatorTest : Spek({
 
             val playerHand = Hand.fromCards(Card.FIVE, Card.FIVE)
             val dealerHand = Hand.fromCard(Card.TWO)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
 
             val (action, score) = getBestAction(
                     playerHand,
@@ -64,7 +68,7 @@ object HandCalculatorTest : Spek({
         test("Always split on aces", Skip.No, 60 * 1000) {
             val playerHand = Hand.fromCards(Card.ACE, Card.ACE) // calculator.Hand.newHand(calculator.Card.ACE, calculator.Card.ACE)
             val dealerHand = Hand.fromCard(Card.TEN)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
 
             val (action, score) = getBestAction(
                     playerHand,
@@ -81,7 +85,7 @@ object HandCalculatorTest : Spek({
         test("insurance works") {
             val playerHand = Hand.fromCards(Card.FIVE, Card.NINE)
             val dealerHand = Hand.fromCard(Card.ACE)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
             val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, null, false, false)
 
         }
@@ -90,7 +94,7 @@ object HandCalculatorTest : Spek({
             val playerHand = Hand.fromCards(Card.ACE, Card.TEN)
             val dealerHand = Hand.fromCard(Card.THREE)
             val splitHand = Hand.fromCards(Card.ACE, Card.ACE)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand, splitHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand, splitHand)
 
             val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, splitHand, true, false)
             assertThat(score.toDouble()).isStrictlyBetween(0.0, 1.0)
@@ -100,7 +104,7 @@ object HandCalculatorTest : Spek({
         test("differences between splits") {
             val playerHand = Hand.fromCards(Card.ACE, Card.TWO)
             val dealerHand = Hand.fromCard(Card.TEN)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand)
 
 
             val (action1, score1) = getBestAction(playerHand, dealerHand, shoe, false, Hand.fromCards(Card.ACE, Card.TWO), true, false)
@@ -111,7 +115,7 @@ object HandCalculatorTest : Spek({
 
         test("house edge") {
             val scores: MutableList<BigDecimal> = mutableListOf()
-            val shoe = Shoe(6)
+            val shoe = Shoe(8)
             for ((card, prob) in shoe.getNextStatesAndProbabilities()) {
                 val dealer = Hand.fromCard(card)
                 val shoeAfterDealer = shoe.removeCard(card)
@@ -135,7 +139,7 @@ object HandCalculatorTest : Spek({
             val playerHand = Hand.fromCards(Card.FIVE, Card.ACE)
             val playerSplit = Hand.fromCards(Card.FIVE, Card.FIVE, Card.FIVE, Card.FIVE)
             val dealerHand = Hand.fromCard(Card.FIVE)
-            val shoe = Shoe.fromHands(6, playerHand, dealerHand, playerSplit)
+            val shoe = Shoe.fromHands(8, playerHand, dealerHand, playerSplit)
             val (action, score) = getBestAction(playerHand, dealerHand, shoe, false, playerSplit, false, false)
             println(action)
             println(score)

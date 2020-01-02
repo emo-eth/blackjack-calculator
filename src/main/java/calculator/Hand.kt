@@ -18,17 +18,25 @@ class Hand : Iterable<Byte> {
         fun fromUtf8(hand: ByteArray): Hand {
             return Hand(hand.map { (it - 0x30).toByte() }.toByteArray())
         }
+
+        fun fromListOfValues(hand: List<Int>): Hand {
+            return Hand(hand.map { if (it == 11) 0 else it - 1}.map{it.toByte()}.toByteArray())
+        }
     }
 
     private val hand: ByteArray
     val size: Int
+    var isSoftVal: Boolean? = null
+    var preferredVal: Int? = null
+    var hardVal: Int? = null
+    var softVal: Int? = null
 
     constructor(vararg cards: Card) {
-        hand = cards.map { card -> card.num }.sorted().toByteArray()
+        hand = cards.map { card -> card.num }.toByteArray().sortedArray()
         size = hand.size
     }
 
-    private constructor(hand: ByteArray) {
+    constructor(hand: ByteArray) {
         this.hand = hand
         this.hand.sort()
         size = hand.size
@@ -40,32 +48,49 @@ class Hand : Iterable<Byte> {
     }
 
     fun addCard(card: Card): Hand {
-        val iterator = sequenceAdder(hand, card).iterator()
-        return Hand(ByteArray(hand.size + 1) { iterator.next() })
+        val newHand = byteArrayOf(*hand, card.num)
+        return Hand(newHand)
     }
 
     fun isSoft(): Boolean {
-        return hand[0] == Card.ACE.num
+        if (isSoftVal == null) {
+            isSoftVal = hand[0] == Card.ACE.num
+        }
+        return isSoftVal as Boolean
     }
 
     fun getHardValue(): Int {
-        return hand.map { x -> x.toInt() + 1 }.sum()
+        if (hardVal == null) {
+            hardVal = hand.map { x -> x.toInt() + 1 }.sum()
+        }
+        return hardVal as Int
     }
 
     fun getSoftValue(): Int {
-        if (isSoft()) return 10 + getHardValue()
-        return getHardValue()
+        if (softVal == null) {
+            if (isSoft()) {
+                softVal = 10 + getHardValue()
+            } else {
+                softVal = getHardValue()
+            }
+        }
+        return softVal as Int
     }
 
-    fun getPreferredValue(): Int {
-        if (isSoft()) {
-            val soft = getSoftValue()
-            if (soft > 21) {
-                return soft - 10
+    fun     getPreferredValue(): Int {
+        if (preferredVal == null) {
+            if (isSoft()) {
+                val soft = getSoftValue()
+                if (soft > 21) {
+                    preferredVal = soft - 10
+                } else {
+                    preferredVal = soft
+                }
+            } else {
+                preferredVal = getHardValue()
             }
-            return soft
         }
-        return getHardValue()
+        return preferredVal as Int
     }
 
     override operator fun iterator(): Iterator<Byte> {
@@ -99,24 +124,4 @@ class Hand : Iterable<Byte> {
         return hand
     }
 
-}
-
-fun sequenceAdder(hand: ByteArray, newCard: Card): Sequence<Byte> = sequence {
-    var yieldedCard = false
-    val iter = hand.iterator()
-    while (iter.hasNext()) {
-        val cardVal = iter.next()
-        if (cardVal > newCard.num) {
-            yield(newCard.num)
-            yieldedCard = true
-            yield(cardVal)
-            break
-        } else {
-            yield(cardVal)
-        }
-    }
-    yieldAll(iter)
-    if (!yieldedCard) {
-        yield(newCard.num)
-    }
 }

@@ -31,7 +31,12 @@ class Shoe {
             var shoe = Shoe(numDecks)
             for (hand in hands) {
                 for (card in hand) {
-                    shoe = shoe.removeCard(Card.fromByte(card))
+                    val cardInt = card.toInt()
+                    val shoeVal = shoe.shoe[cardInt]
+                    if (shoeVal <= 0) {
+                        throw Error("Cannot remove empty card")
+                    }
+                    shoe.shoe[cardInt] = (shoeVal - 1).toShort()
                 }
             }
             return shoe
@@ -46,9 +51,8 @@ class Shoe {
         }
     }
 
-    val size = 10
-
     private val shoe: Array<Short>
+    private var nextStatesAndProbabilities: List<Pair<Card, BigDecimal>>? = null
 
     constructor(shoe: Array<Short>) {
         this.shoe = shoe
@@ -78,17 +82,21 @@ class Shoe {
     }
 
     fun getNextStatesAndProbabilities(): List<Pair<Card, BigDecimal>> {
+        if (nextStatesAndProbabilities != null) {
+            return nextStatesAndProbabilities!!
+        }
         var count = BigDecimal(0)
         val valueProbs: MutableList<Pair<Card, BigDecimal>> = mutableListOf()
-        for (i in 0.until(size)) {
+        for (i in 0.until(10)) {
             val numCards = shoe[i].toInt()
             if (numCards == 0) continue
             count = count.plus(BigDecimal(numCards))
             valueProbs.add(Pair(Card.fromByte(i.toByte()), BigDecimal(numCards)))
         }
-        return valueProbs.map { entry ->
+        nextStatesAndProbabilities = valueProbs.map { entry ->
             Pair(entry.first, entry.second.divide(count, 32, RoundingMode.HALF_UP))
         }
+        return nextStatesAndProbabilities!!
     }
 
     fun removeCard(card: Card): Shoe {

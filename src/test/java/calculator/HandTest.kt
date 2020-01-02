@@ -28,5 +28,8 @@ object HandTest : Spek({
             hand = hand.addCard(Card.TWO)
             assertThat(hand[1]).isEqualTo(Card.TWO.num)
         }
+        test("All things sort") {
+            throw NotImplementedError()
+        }
     }
 })

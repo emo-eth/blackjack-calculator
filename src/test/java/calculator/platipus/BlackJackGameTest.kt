@@ -1,6 +1,9 @@
-package calculator
+package calculator.platipus
 
+import calculator.Card
 import calculator.Card.Companion.fromByte
+import calculator.Hand
+import calculator.Shoe
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import java.math.BigDecimal
@@ -88,7 +91,7 @@ object BlackJackGameTest : Spek({
             assertThat(actions.size).isEqualTo(4)
         }
 
-        test("calculator.getUtility returns reasonable values") {
+        test("calculator.Platipus.getUtility returns reasonable values") {
             assertThat(getUtility(20, 2, 2, Card.TWO, false, false, false, false)).isEqualTo(1.0)
             assertThat(getUtility(15, 18, 2, Card.TWO, false, false, false, false)).isEqualTo(-1.0)
             assertThat(getUtility(21, 18, 2, Card.TWO, true, false, false, false)).isEqualTo(1.5)
@@ -96,7 +99,7 @@ object BlackJackGameTest : Spek({
             assertThat(getUtility(18, 21, 2, Card.TWO, false, false, true, false)).isEqualTo(0.0)
         }
 
-        test("calculator.scoreHand returns reasonable values") {
+        test("calculator.Platipus.scoreHand returns reasonable values") {
             var shoe = Shoe(6)
             assertThat(
                     scoreHand(20, HandHelper.of(Card.TEN.num.toInt()), Card.TEN, shoe, false, false, false, false).toDouble()
