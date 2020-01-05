@@ -1,50 +1,19 @@
-package calculator.classic
+package calculator
 
-import calculator.*
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.logging.Logger
-import java.util.stream.Collectors
 
-val DOUBLE_RANGE = IntRange(9,11)
-
-object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
+class HandCalculator(private val game: AbstractBlackJackGame, private val db: AbstractGameStateModel) {
     private val logger: Logger = Logger.getLogger("HandCalculator")
-    private val db = {
-        val db = GameStateClassic()
-//        db.loadInsertCacheSet()
-        db
-    }()
 
-    fun getAllPossibleActions(
-            playerHand: Hand,
-            dealerHand: Hand,
-            split: Hand?,
-            splitAces: Boolean,
-            insurance: Boolean
-    ): List<Action> {
-        val actions = mutableListOf(Action.STAND)
-        if (splitAces) {
-            if (playerHand.size == 1) return listOf(Action.HIT)
-            if (playerHand.size == 2) return actions
-        }
-
-        // we don't care about double and splitAces here because this state is reachable regardless
-        if (game.canHit(playerHand, false, false)) actions.add(Action.HIT)
-        if (game.canDouble(playerHand, false, false)) actions.add(Action.DOUBLE)
-        if (game.canSplit(playerHand, split)) actions.add(Action.SPLIT)
-//        if (game.canInsure(playerHand, dealerHand, split, insurance)) actions.add(Action.INSURANCE)
-
-        return actions
-    }
-
-    fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    private fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
         val newPlayerHand = playerHand.addCard(card)
         val newShoe = shoe.removeCard(card)
         return Pair(newPlayerHand, newShoe)
     }
 
-    fun doDouble(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    private fun doDouble(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
         return doHit(card, playerHand, shoe)
     }
 
@@ -55,7 +24,7 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
                             split: Hand?,
                             splitAces: Boolean,
                             insurance: Boolean): List<Pair<Action, BigDecimal>> {
-        val possibleActions: List<Action> = getAllPossibleActions(
+        val possibleActions: List<Action> = game.getAllPossibleActions(
                 playerHand,
                 dealerHand,
                 split,
@@ -68,7 +37,7 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
         }
         if (actions == null || actions.isEmpty()) {
             logger.info("Computing hand ${String(playerHand.toUTF8())} ${if (split == null) "" else String(split.toUTF8())} ${String(dealerHand.toUTF8())} ins: $insurance splitAce: $splitAces")
-            val calculatedActions = possibleActions.parallelStream().map { action ->
+            val calculatedActions = possibleActions.map { action ->
                 val score = evaluateAction(
                         action,
                         playerHand,
@@ -79,17 +48,17 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
                         splitAces,
                         insurance)
                 Pair(action, score)
-            }.collect(Collectors.toList())
+            }
 
             // sort descending
-            calculatedActions.sortBy { x -> -x.second }
+            val sorted = calculatedActions.sortedBy { x -> -x.second }
 
             try {
-                db.insertHand(insurance, split, splitAces, dealerHand, playerHand, calculatedActions)
+                db.insertHand(insurance, split, splitAces, dealerHand, playerHand, sorted)
             } catch (ex: SQLException) {
                 println(ex.message)
             }
-            return calculatedActions
+            return sorted
         }
         return actions.map { x -> Pair(x.first, x.second) }
     }
@@ -104,8 +73,8 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
             insurance: Boolean
     ): Pair<Action, BigDecimal> {
         val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, splitAces, insurance)
-        return actions.filter { x ->
-            canPerform(
+        val performActions = actions.filter { x ->
+            game.canPerform(
                     x.first,
                     playerHand,
                     dealerHand,
@@ -114,36 +83,11 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
                     splitAces,
                     insurance
             )
-        }[0]
-    }
-
-    fun canPerform(
-            action: Action,
-            playerHand: Hand,
-            dealerHand: Hand,
-            double: Boolean,
-            split: Hand?,
-            splitAces: Boolean,
-            insurance: Boolean
-    ): Boolean {
-        return when (action) {
-            Action.STAND -> true
-            Action.HIT ->
-                // playerHand value will always be <21 at this stage
-                game.canHit(playerHand, double, splitAces)
-            Action.DOUBLE ->
-                game.canDouble(playerHand, double, splitAces)
-            Action.INSURANCE -> // todo: consider always passing false
-                false
-//                game.canInsure(playerHand, dealerHand, split, insurance)
-            Action.SPLIT ->
-                game.canSplit(playerHand, split)
-            Action.SURRENDER ->
-                false
         }
+        return performActions[0]
     }
 
-    override fun evaluateAction(
+    fun evaluateAction(
             action: Action,
             playerHand: Hand,
             dealerHand: Hand,
@@ -160,9 +104,8 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
                         playerHand,
                         split,
                         dealerHand,
-                        Card.fromByte(dealerHand[0]),
                         shoe,
-                        playerValue == 21 && playerHand.size == 2 && !splitAces,
+                        playerValue == 21 && playerHand.size == 2,
                         double,
                         insurance,
                         splitAces
@@ -213,7 +156,7 @@ object ClassicHandCalculator : AbstractHandCalculator(BlackJackClassicGame) {
                         // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
                         val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, playerHand.isSoft(), insurance)
                         val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, playerHand.isSoft(), insurance)
-                        scores.add((scoreHand1.plus(scoreHand2)).times(prob).times(prob2))
+                        scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
                     }
                 }
                 scores.reduce { x, y -> x.plus(y) }

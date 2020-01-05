@@ -108,6 +108,25 @@ class Shoe {
         return newShoe
     }
 
+
+    fun getProbAce(): BigDecimal {
+        val stateProbs = getNextStatesAndProbabilities()
+        val firstCardAndProb = stateProbs[0]
+        if (firstCardAndProb.first == Card.ACE) {
+            return firstCardAndProb.second
+        }
+        return BigDecimal(0)
+    }
+
+    fun getProbTen(): BigDecimal {
+        val stateProbs = getNextStatesAndProbabilities()
+        val lastCardAndProb = stateProbs[stateProbs.size - 1]
+        if (lastCardAndProb.first == Card.TEN) {
+            return lastCardAndProb.second
+        }
+        return BigDecimal(0)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

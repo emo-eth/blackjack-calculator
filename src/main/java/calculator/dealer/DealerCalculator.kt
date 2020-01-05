@@ -5,8 +5,6 @@ import calculator.Hand
 import calculator.Shoe
 import java.math.BigDecimal
 
-val db = DealerProbabilitiesModel()
-
 fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe) {
     val dealerProbs = getDealerResultProbs(dealerCard, shoe)
     insertDealerProbs(playerHand, dealerCard, dealerProbs)
@@ -17,8 +15,9 @@ fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe
  */
 fun getDealerResultProbs(dealerCard: Card, shoe: Shoe): Map<Int, BigDecimal> {
     val dealerHand = Hand.fromCard(dealerCard)
-    return dealerResultProbsSeq(dealerHand, shoe, BigDecimal(1))
+    val seqList = dealerResultProbsSeq(dealerHand, shoe, BigDecimal(1))
             .toList()
+    return seqList
             .groupByTo(hashMapOf(), { pair -> pair.first }, { pair -> pair.second })
             .entries.map {
         Pair(it.key, it.value.reduce { acc, next -> acc.plus(next) })
@@ -56,5 +55,5 @@ fun dealerFinished(hand: Hand): Boolean {
  * Insert player, dealer, and probability values into the database.
  */
 fun insertDealerProbs(playerHand: Hand, dealerCard: Card, dealerProbs: Map<Int, BigDecimal>) {
-    db.insertHand(playerHand, Hand.fromCard(dealerCard), dealerProbs)
+    DealerProbabilitiesModel.insertHand(playerHand, Hand.fromCard(dealerCard), dealerProbs)
 }

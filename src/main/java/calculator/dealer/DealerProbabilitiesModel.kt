@@ -26,26 +26,25 @@ object DealerProbabilities : Table() {
     val _22 = double("22").nullable()
 }
 
-class DealerProbabilitiesModel {
-    companion object {
-        val db = {
-                    val dataSource = PGPoolingDataSource()
-                    dataSource.databaseName = System.getenv("POSTGRES_DATABASE")
-                    dataSource.user = System.getenv("POSTGRES_USER")
-                    dataSource.portNumber = System.getenv("POSTGRES_PORT").toInt()
-                    dataSource.serverName = System.getenv("POSTGRES_HOST")
-                    dataSource.password = System.getenv("POSTGRES_PASSWORD")
-                    dataSource.maxConnections = 300
-                    Database.connect(dataSource)
-                }()
-        private val lock = ReentrantLock()
-        private val logger: Logger = Logger.getLogger("CalculationDatabase")
-        private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
-        private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
-        private val fullCacheMap: MutableMap<Pair<String, String>, Map<Int, BigDecimal>> = mutableMapOf()
-        private val MAX_MAP_ENTRIES = 5000
+object DealerProbabilitiesModel {
+    val db = {
+                val dataSource = PGPoolingDataSource()
+                dataSource.databaseName = System.getenv("POSTGRES_DATABASE")
+                dataSource.user = System.getenv("POSTGRES_USER")
+                dataSource.portNumber = System.getenv("POSTGRES_PORT").toInt()
+                dataSource.serverName = System.getenv("POSTGRES_HOST")
+                dataSource.password = System.getenv("POSTGRES_PASSWORD")
+                dataSource.maxConnections = 300
+                Database.connect(dataSource)
+            }()
+    private val lock = ReentrantLock()
+    private val logger: Logger = Logger.getLogger("CalculationDatabase")
+    private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
+    private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
+    private val fullCacheMap: MutableMap<Pair<String, String>, Map<Int, BigDecimal>> = mutableMapOf()
+    private val MAX_MAP_ENTRIES = 5000
 
-    }
+
 
 
     fun initialize() {
@@ -64,7 +63,7 @@ class DealerProbabilitiesModel {
 
     fun loadInsertCacheSet() {
         transaction {
-            DealerProbabilities.selectAll().map {
+            DealerProbabilities.selectAll().forEach {
                 val player = it[DealerProbabilities.player]
                 val dealer = it [DealerProbabilities.dealer]
                 val mapKey: Pair<String, String> = Pair(player, dealer.toString())
@@ -159,7 +158,9 @@ class DealerProbabilitiesModel {
 
         if (batchInsertMap.size < MAX_MAP_ENTRIES && MAX_MAP_ENTRIES != 0) {
             logger.info("Inserting into map size ${batchInsertMap.size}")
-            batchInsertMap[makeMapKey(player, dealer)] = calculations
+            val makeMapKey = makeMapKey(player, dealer)
+            batchInsertMap[makeMapKey] = calculations
+            insertCacheSet.add(makeMapKey)
             return
         }
 

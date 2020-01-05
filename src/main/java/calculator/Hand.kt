@@ -77,7 +77,7 @@ class Hand : Iterable<Byte> {
         return softVal as Int
     }
 
-    fun     getPreferredValue(): Int {
+    fun getPreferredValue(): Int {
         if (preferredVal == null) {
             if (isSoft()) {
                 val soft = getSoftValue()
