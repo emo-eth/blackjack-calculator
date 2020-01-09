@@ -31,5 +31,14 @@ object HandTest : Spek({
         test("All things sort") {
             throw NotImplementedError()
         }
+
+        test("Empty cards") {
+            try {
+                val hand = Hand.fromCards()
+                hand.addCard(Card.TEN)
+            } catch (er: Error) {
+
+            }
+        }
     }
 })

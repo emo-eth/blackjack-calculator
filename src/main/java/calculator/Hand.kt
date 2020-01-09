@@ -15,6 +15,11 @@ class Hand : Iterable<Byte> {
             return Hand(byteArrayOf(*hand.getBytes(), *otherHand.getBytes()))
         }
 
+        fun fromHands(vararg hands: Hand?): Hand {
+            if (hands.isEmpty()) return Hand()
+            return hands.filterNotNull().reduce { acc, hand -> combineHands(acc, hand)}
+        }
+
         fun fromUtf8(hand: ByteArray): Hand {
             return Hand(hand.map { (it - 0x30).toByte() }.toByteArray())
         }

@@ -108,6 +108,21 @@ class Shoe {
         return newShoe
     }
 
+    fun removeHand(hand: Hand): Shoe {
+        var newShoe = this
+        for (card in hand) {
+            newShoe = newShoe.removeCard(Card.fromByte(card))
+        }
+        return newShoe
+    }
+
+    fun removeHands(vararg hands: Hand): Shoe {
+        var newShoe = this
+        for (hand in hands) {
+            newShoe = newShoe.removeHand(hand)
+        }
+        return newShoe
+    }
 
     fun getProbAce(): BigDecimal {
         val stateProbs = getNextStatesAndProbabilities()

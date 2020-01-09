@@ -2,6 +2,7 @@ package calculator
 
 import calculator.classic.ClassicBlackJackGame
 import calculator.dealer.DealerProbabilitiesModel
+import calculator.dealer.calculateAndInsertDealerProbs
 import java.math.BigDecimal
 
 abstract class AbstractBlackJackGame {
@@ -132,6 +133,7 @@ abstract class AbstractBlackJackGame {
 
         val dealerScoresAndProbabilities = getDealerProbs(playerHand, split, dealerHand)
 
+
         val playerValue = playerHand.getPreferredValue()
         val utilities: List<Double> = dealerScoresAndProbabilities.map { entry ->
             val (dealerValue, prob) = entry
@@ -153,7 +155,9 @@ abstract class AbstractBlackJackGame {
 
     fun getDealerProbs(playerHand: Hand, split: Hand?, dealerHand: Hand): Map<Int, BigDecimal> {
         val combinedHands = if (split == null) playerHand else Hand.combineHands(playerHand, split)
-        return DealerProbabilitiesModel.getProbabilities(combinedHands, dealerHand)
+        val probs = DealerProbabilitiesModel.getProbabilitiesIfExist(combinedHands, dealerHand)
+        if (probs != null) return probs
+        return calculateAndInsertDealerProbs(Hand.fromHands(playerHand, split), Card.fromByte(dealerHand[0]), getStartingShoe())
     }
 
 }

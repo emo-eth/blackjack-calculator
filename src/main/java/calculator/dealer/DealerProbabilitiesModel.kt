@@ -151,6 +151,32 @@ object DealerProbabilitiesModel {
         }.toMap()
     }
 
+    fun getProbabilitiesIfExist(
+            player: Hand,
+            dealer: Hand
+    ): Map<Int, BigDecimal>? {
+        val fetched = fullCacheMap[makeMapKey(player, dealer)]
+        if (fetched != null) {
+            logger.info("Cache map hit")
+            return fetched
+        }
+        val resultRow = transaction {
+            DealerProbabilities.select {
+                (DealerProbabilities.dealer.eq(dealer.toUTF8()[0].toChar()) and
+                        DealerProbabilities.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
+            }.firstOrNull()
+        } ?: return null
+
+        return mapOf(Pair(17, resultRow[DealerProbabilities._17]?.toDouble()),
+                Pair(18, resultRow[DealerProbabilities._18]?.toDouble()),
+                Pair(19, resultRow[DealerProbabilities._19]?.toDouble()),
+                Pair(20, resultRow[DealerProbabilities._20]?.toDouble()),
+                Pair(21, resultRow[DealerProbabilities._21]?.toDouble()),
+                Pair(22, resultRow[DealerProbabilities._22]?.toDouble())).map { entry ->
+            entry.key to BigDecimal(entry.value as Double)
+        }.toMap()
+    }
+
     fun insertHand(
             player: Hand,
             dealer: Hand,
@@ -161,6 +187,7 @@ object DealerProbabilitiesModel {
             val makeMapKey = makeMapKey(player, dealer)
             batchInsertMap[makeMapKey] = calculations
             insertCacheSet.add(makeMapKey)
+            fullCacheMap[makeMapKey(player, dealer)] = calculations
             return
         }
 

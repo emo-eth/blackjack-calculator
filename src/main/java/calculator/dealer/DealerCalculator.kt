@@ -5,9 +5,10 @@ import calculator.Hand
 import calculator.Shoe
 import java.math.BigDecimal
 
-fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe) {
+fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe): Map<Int, BigDecimal> {
     val dealerProbs = getDealerResultProbs(dealerCard, shoe)
     insertDealerProbs(playerHand, dealerCard, dealerProbs)
+    return dealerProbs
 }
 
 /**

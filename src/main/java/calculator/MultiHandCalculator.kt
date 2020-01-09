@@ -1,19 +1,21 @@
 package calculator
 
+import calculator.classic.MultiClassicGameStateModel
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.logging.Logger
 
-class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGameStateModel) {
+class MultiHandCalculator(val game: AbstractBlackJackGame) {
     private val logger: Logger = Logger.getLogger("HandCalculator")
+    val db = MultiClassicGameStateModel
 
-    private fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    protected fun doHit(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
         val newPlayerHand = playerHand.addCard(card)
         val newShoe = shoe.removeCard(card)
         return Pair(newPlayerHand, newShoe)
     }
 
-    private fun doDouble(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
+    protected fun doDouble(card: Card, playerHand: Hand, shoe: Shoe): Pair<Hand, Shoe> {
         return doHit(card, playerHand, shoe)
     }
 
@@ -22,6 +24,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                             shoe: Shoe,
                             double: Boolean,
                             split: Hand?,
+                            cardsInPlay: Hand?,
                             splitAces: Boolean,
                             insurance: Boolean): List<Pair<Action, BigDecimal>> {
         val possibleActions: List<Action> = game.getAllPossibleActions(
@@ -31,7 +34,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                 splitAces,
                 insurance
         )
-        val actions = db.getHand(insurance, split, splitAces, dealerHand, playerHand)
+        val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand)
         if (actions != null && actions.size != possibleActions.size) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
@@ -45,6 +48,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                         shoe,
                         double,
                         split,
+                        cardsInPlay,
                         splitAces,
                         insurance)
                 Pair(action, score)
@@ -54,7 +58,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
             val sorted = calculatedActions.sortedBy { x -> -x.second }
 
             try {
-                db.insertHand(insurance, split, splitAces, dealerHand, playerHand, sorted)
+                db.insertHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand, sorted)
             } catch (ex: SQLException) {
                 println(ex.message)
             }
@@ -69,10 +73,11 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
             shoe: Shoe,
             double: Boolean,
             split: Hand?,
+            cardsInPlay: Hand?,
             splitAces: Boolean,
             insurance: Boolean
     ): Pair<Action, BigDecimal> {
-        val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, splitAces, insurance)
+        val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, cardsInPlay, splitAces, insurance)
         val performActions = actions.filter { x ->
             game.canPerform(
                     x.first,
@@ -94,15 +99,17 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
             shoe: Shoe,
             double: Boolean,
             split: Hand?,
+            cardsInPlay: Hand?,
             splitAces: Boolean,
             insurance: Boolean
     ): BigDecimal {
         return when (action) {
             (Action.STAND) -> {
+                val combinedHands = if (split != null) (if (cardsInPlay != null) Hand.combineHands(split, cardsInPlay) else split) else null
                 val playerValue = playerHand.getPreferredValue()
                 game.scoreHand(
                         playerHand,
-                        split,
+                        combinedHands,
                         dealerHand,
                         shoe,
                         playerValue == 21 && playerHand.size == 2,
@@ -121,6 +128,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                             newShoe,
                             double,
                             split,
+                            cardsInPlay,
                             splitAces,
                             insurance
                     )
@@ -138,6 +146,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                             newShoe,
                             true,
                             split,
+                            cardsInPlay,
                             splitAces,
                             insurance
                     )
@@ -154,8 +163,8 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                         val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
                         val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
                         // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
-                        val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, playerHand.isSoft(), insurance)
-                        val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, playerHand.isSoft(), insurance)
+                        val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, cardsInPlay, playerHand.isSoft(), insurance)
+                        val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, cardsInPlay, playerHand.isSoft(), insurance)
                         scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
                     }
                 }
@@ -171,6 +180,7 @@ class HandCalculator(val game: AbstractBlackJackGame, private val db: AbstractGa
                         shoe,
                         double,
                         split,
+                        cardsInPlay,
                         splitAces,
                         true
                 )
