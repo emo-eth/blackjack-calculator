@@ -13,7 +13,7 @@ object BetFuryActionController : AbstractActionController(HandCalculator(BetFury
     override val logger: Logger = Logger.getLogger("BetFuryActionController")
 
     @GetMapping("/betFuryAction")
-    override fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "insurance") insurance: Boolean): ActionResponse {
+    override fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String, @RequestParam(value = "insurance") insurance: Boolean): ActionResponse {
         return getActionHelper(player, dealer, split, insurance)
     }
 }

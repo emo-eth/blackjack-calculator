@@ -108,6 +108,7 @@ object MultiClassicGameStateModel {
             MultiClassicGameState.select {
                 (MultiClassicGameState.insurance.eq(insurance) and
                         MultiClassicGameState.split.eq(split?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
+                        MultiClassicGameState.cardsInPlay.eq(cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
                         MultiClassicGameState.dealer.eq(dealer.toUTF8()[0].toChar()) and
                         MultiClassicGameState.splitAces.eq(splitAces) and
                         MultiClassicGameState.player.eq(player.toUTF8().toString(Charset.defaultCharset())))

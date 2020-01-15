@@ -31,7 +31,7 @@ class MutliClassicActionController {
         return ActionResponse(action, score.toDouble())
     }
 
-    @GetMapping("/classicAction")
+    @GetMapping("/multiClassicAction")
     fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "cardsInPlay") cardsInPlay: String?, @RequestParam(value="insurance") insurance: Boolean): ActionResponse {
 
         return this.getActionHelper(player, dealer, insurance, split, cardsInPlay)
