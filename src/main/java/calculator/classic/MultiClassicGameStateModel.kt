@@ -2,6 +2,7 @@ package calculator.classic
 
 import calculator.Action
 import calculator.Hand
+import calculator.util.LRUDBCache
 import calculator.classic.MultiClassicGameState.actionDouble
 import calculator.classic.MultiClassicGameState.actionHit
 import calculator.classic.MultiClassicGameState.actionInsurance
@@ -37,10 +38,10 @@ object MultiClassicGameState : Table() {
     val actionInsurance = double("action_insurance").nullable()
 
     init {
-        index(false, player)
-        index(false, dealer)
-        index(false, split)
-        index(false, player, dealer, split, cardsInPlay)
+//        index(false, player)
+//        index(false, dealer)
+//        index(false, split)
+//        index(false, player, dealer, split, cardsInPlay)
     }
 }
 
@@ -49,7 +50,7 @@ object MultiClassicGameStateModel {
 
     val logger: Logger = Logger.getLogger("CalculationDatabase")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
-    val multiCacheMap: MutableMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = mutableMapOf()
+    val multiCacheMap: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(100000)
     val lock = ReentrantLock()
     val MAX_MAP_ENTRIES = 50000
 
@@ -65,7 +66,6 @@ object MultiClassicGameStateModel {
 
             SchemaUtils.create(MultiClassicGameState)
         }
-
     }
 
     fun convertRow(resultRow: ResultRow): List<Pair<Action, BigDecimal>> {

@@ -36,7 +36,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                 insurance
         )
         val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand)
-        if (actions != null && actions.size != possibleActions.size) {
+        if (actions != null && actions.size != possibleActions.size && !(actions.map{it.first}.contains(Action.SPLIT) && !possibleActions.contains(Action.SPLIT))) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
         if (actions == null || actions.isEmpty()) {
@@ -78,6 +78,9 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             splitAces: Boolean,
             insurance: Boolean
     ): Pair<Action, BigDecimal> {
+        if (game.canSplit(playerHand, split) && game.shouldSplit(playerHand, split)) {
+            return Pair(Action.SPLIT, BigDecimal(-1))
+        }
         val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, cardsInPlay, splitAces, insurance)
         val performActions = actions.filter { x ->
             game.canPerform(

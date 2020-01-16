@@ -2,6 +2,8 @@ package rest
 
 import calculator.Hand
 import calculator.classic.ClassicBlackJackGame
+import calculator.classic.MultiClassicGameStateModel
+import calculator.dealer.DealerProbabilitiesModel
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -11,6 +13,11 @@ import java.util.logging.Logger
 class MutliClassicActionController {
     val logger: Logger = Logger.getLogger("MultiClassicActionController")
     val handCalc = calculator.MultiHandCalculator(ClassicBlackJackGame)
+
+    init {
+        DealerProbabilitiesModel.initialize()
+        MultiClassicGameStateModel.initialize()
+    }
 
     fun getActionHelper(player: String, dealer: String, insurance: Boolean, split: String?, cardsInPlay: String?): ActionResponse {
         logger.info("GET $dealer, $player, $split, $cardsInPlay")

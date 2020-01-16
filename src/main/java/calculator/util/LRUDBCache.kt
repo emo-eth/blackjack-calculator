@@ -1,7 +1,9 @@
 package calculator.util
 
-class LRUCache<K, V>(private val capacity: Int) {
+import java.util.logging.Logger
 
+class LRUDBCache<K, V>(private val capacity: Int) {
+    private val logger = Logger.getLogger("LRUDBCache<" + this.javaClass.typeParameters.toString() + ">")
     private val map = hashMapOf<K, Node<K, V>>()
     private val head: Node<K, V> = Node(null, null)
     private val tail: Node<K, V> = Node(null, null)
@@ -11,7 +13,7 @@ class LRUCache<K, V>(private val capacity: Int) {
         tail.prev = head
     }
 
-    fun get(key: K): V? {
+    operator fun get(key: K): V? {
         if (map.containsKey(key)) {
             val node = map[key]!!
             remove(node)
@@ -21,7 +23,7 @@ class LRUCache<K, V>(private val capacity: Int) {
         return null
     }
 
-    fun put(key: K, value: V) {
+    operator fun set(key: K, value: V) {
         if (map.containsKey(key)) {
             remove(map[key]!!)
         }
@@ -35,7 +37,14 @@ class LRUCache<K, V>(private val capacity: Int) {
         }
     }
 
+    fun clear() {
+        map.clear()
+        head.next = tail
+        tail.prev = head
+    }
+
     private fun remove(node: Node<K, V>) {
+        logger.info("Removing cache element")
         val next = node.next!!
         val prev = node.prev!!
         prev.next = next
