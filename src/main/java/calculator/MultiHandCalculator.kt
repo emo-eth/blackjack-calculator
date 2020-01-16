@@ -2,6 +2,7 @@ package calculator
 
 import calculator.classic.MultiClassicGameStateModel
 import java.math.BigDecimal
+import java.nio.charset.Charset
 import java.sql.SQLException
 import java.util.logging.Logger
 
@@ -39,7 +40,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
         if (actions == null || actions.isEmpty()) {
-            logger.info("Computing hand ${String(dealerHand.toUTF8())} ${String(playerHand.toUTF8())} ${split?.toUTF8() ?: ""} ${cardsInPlay?.toUTF8() ?: ""} ins: $insurance splitAce: $splitAces")
+            logger.info("Computing hand ${String(dealerHand.toUTF8())} ${String(playerHand.toUTF8())} ${split?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ${cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ins: $insurance splitAce: $splitAces")
             val calculatedActions = possibleActions.map { action ->
                 val score = evaluateAction(
                         action,
