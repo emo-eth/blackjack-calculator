@@ -50,7 +50,7 @@ object MultiClassicGameStateModel {
 
     val logger: Logger = Logger.getLogger("CalculationDatabase")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
-    val multiCacheMap: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(100000)
+    val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(100000)
     val lock = ReentrantLock()
     val MAX_MAP_ENTRIES = 50000
 
@@ -99,7 +99,7 @@ object MultiClassicGameStateModel {
             player: Hand
     ): List<Pair<Action, BigDecimal>>? {
         val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
-        val fetched = multiCacheMap[mapKey]
+        val fetched = lruCache[mapKey]
         if (fetched != null) {
             logger.info("Cache map hit")
             return fetched
@@ -116,7 +116,7 @@ object MultiClassicGameStateModel {
         } ?: return null
 
         val result = convertRow(resultRow)
-        multiCacheMap[mapKey] = result
+        lruCache[mapKey] = result
         return result
 
     }
@@ -130,7 +130,7 @@ object MultiClassicGameStateModel {
             player: Hand,
             calculations: List<Pair<Action, BigDecimal>>) {
         val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
-        multiCacheMap[mapKey] = calculations
+        lruCache[mapKey] = calculations
 
         if (multiBatchInsertMap.size < MAX_MAP_ENTRIES) {
             lock.lock()
@@ -208,7 +208,6 @@ object MultiClassicGameStateModel {
             }
         } finally {
             multiBatchInsertMap.clear()
-            multiCacheMap.clear()
         }
     }
 

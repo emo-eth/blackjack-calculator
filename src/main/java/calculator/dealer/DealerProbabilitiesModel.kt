@@ -156,7 +156,8 @@ object DealerProbabilitiesModel {
             player: Hand,
             dealer: Hand
     ): Map<Int, BigDecimal>? {
-        val fetched = lruCacheMap[makeMapKey(player, dealer)]
+        val mapKey = makeMapKey(player, dealer)
+        val fetched = lruCacheMap[mapKey]
         if (fetched != null) {
             logger.info("Cache map hit")
             return fetched
@@ -168,7 +169,7 @@ object DealerProbabilitiesModel {
             }.firstOrNull()
         } ?: return null
 
-        return mapOf(Pair(17, resultRow[DealerProbabilities._17]?.toDouble()),
+        val returnValue = mapOf(Pair(17, resultRow[DealerProbabilities._17]?.toDouble()),
                 Pair(18, resultRow[DealerProbabilities._18]?.toDouble()),
                 Pair(19, resultRow[DealerProbabilities._19]?.toDouble()),
                 Pair(20, resultRow[DealerProbabilities._20]?.toDouble()),
@@ -176,6 +177,9 @@ object DealerProbabilitiesModel {
                 Pair(22, resultRow[DealerProbabilities._22]?.toDouble())).map { entry ->
             entry.key to BigDecimal(entry.value as Double)
         }.toMap()
+        lruCacheMap[mapKey] = returnValue
+
+        return returnValue
     }
 
     fun insertHand(
