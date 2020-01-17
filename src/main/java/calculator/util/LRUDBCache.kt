@@ -1,11 +1,12 @@
 package calculator.util
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
 class LRUDBCache<K, V>(private val capacity: Int) {
     private val logger = Logger.getLogger("LRUDBCache")
-    private val map = hashMapOf<K, Node<K, V>>()
+    private val map = ConcurrentHashMap<K, Node<K, V>>()
     private val head: Node<K, V> = Node(null, null)
     private val tail: Node<K, V> = Node(null, null)
     private val lock: ReentrantLock = ReentrantLock()
@@ -26,17 +27,12 @@ class LRUDBCache<K, V>(private val capacity: Int) {
     }
 
     operator fun set(key: K, value: V) {
-        lock.lock()
-        try {
-            if (map.containsKey(key)) {
-                remove(map[key]!!)
-            }
-        } finally {
-            lock.unlock()
+        if (map.containsKey(key)) {
+            remove(map[key]!!)
         }
         val node = Node(key, value)
-        addAtEnd(node)
         map[key] = node
+        addAtEnd(node)
         if (map.size > capacity) {
             val first = head.next!!
             remove(first)
