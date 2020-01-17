@@ -45,6 +45,9 @@ class Hand : Iterable<Byte> {
         this.hand = hand
         this.hand.sort()
         size = hand.size
+        if (size == 0) {
+            throw IllegalArgumentException("Empty bytearray passed to constructor")
+        }
     }
 
     constructor(card: Card) {

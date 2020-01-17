@@ -3,6 +3,7 @@ package calculator.dealer
 import calculator.Hand
 import calculator.dealer.DealerProbabilities.dealer
 import calculator.dealer.DealerProbabilities.player
+import calculator.util.LRUDBCache
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.ds.PGPoolingDataSource
@@ -41,7 +42,7 @@ object DealerProbabilitiesModel {
     private val logger: Logger = Logger.getLogger("CalculationDatabase")
     private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
     private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
-    private val fullCacheMap: MutableMap<Pair<String, String>, Map<Int, BigDecimal>> = mutableMapOf()
+    private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(100000)
     private val MAX_MAP_ENTRIES = 5000
 
 
@@ -67,7 +68,7 @@ object DealerProbabilitiesModel {
                 val player = it[DealerProbabilities.player]
                 val dealer = it [DealerProbabilities.dealer]
                 val mapKey: Pair<String, String> = Pair(player, dealer.toString())
-                insertCacheSet.add(mapKey)
+//                insertCacheSet.add(mapKey)
             }
         }
     }
@@ -78,7 +79,7 @@ object DealerProbabilitiesModel {
                 val player = it[DealerProbabilities.player]
                 val dealer = it [DealerProbabilities.dealer]
                 val mapKey: Pair<String, String> = Pair(player, dealer.toString())
-                fullCacheMap[mapKey] = mapOf(Pair(17, it[DealerProbabilities._17]?.toDouble()),
+                lruCacheMap[mapKey] = mapOf(Pair(17, it[DealerProbabilities._17]?.toDouble()),
                         Pair(18, it[DealerProbabilities._18]?.toDouble()),
                         Pair(19, it[DealerProbabilities._19]?.toDouble()),
                         Pair(20, it[DealerProbabilities._20]?.toDouble()),
@@ -129,7 +130,7 @@ object DealerProbabilitiesModel {
             player: Hand,
             dealer: Hand
     ): Map<Int, BigDecimal> {
-        val fetched = fullCacheMap[makeMapKey(player, dealer)]
+        val fetched = lruCacheMap[makeMapKey(player, dealer)]
         if (fetched != null) {
             logger.info("Cache map hit")
             return fetched
@@ -155,7 +156,7 @@ object DealerProbabilitiesModel {
             player: Hand,
             dealer: Hand
     ): Map<Int, BigDecimal>? {
-        val fetched = fullCacheMap[makeMapKey(player, dealer)]
+        val fetched = lruCacheMap[makeMapKey(player, dealer)]
         if (fetched != null) {
             logger.info("Cache map hit")
             return fetched
@@ -186,8 +187,7 @@ object DealerProbabilitiesModel {
             logger.info("Inserting into map size ${batchInsertMap.size}")
             val makeMapKey = makeMapKey(player, dealer)
             batchInsertMap[makeMapKey] = calculations
-            insertCacheSet.add(makeMapKey)
-            fullCacheMap[makeMapKey(player, dealer)] = calculations
+            lruCacheMap[makeMapKey(player, dealer)] = calculations
             return
         }
 

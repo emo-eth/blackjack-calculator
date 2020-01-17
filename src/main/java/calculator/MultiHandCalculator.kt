@@ -2,6 +2,7 @@ package calculator
 
 import calculator.classic.MultiClassicGameStateModel
 import java.math.BigDecimal
+import java.nio.charset.Charset
 import java.sql.SQLException
 import java.util.logging.Logger
 
@@ -35,11 +36,11 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                 insurance
         )
         val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand)
-        if (actions != null && actions.size != possibleActions.size) {
+        if (actions != null && actions.size != possibleActions.size && !(actions.map{it.first}.contains(Action.SPLIT) && !possibleActions.contains(Action.SPLIT))) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
         if (actions == null || actions.isEmpty()) {
-            logger.info("Computing hand ${String(playerHand.toUTF8())} ${if (split == null) "" else String(split.toUTF8())} ${String(dealerHand.toUTF8())} ins: $insurance splitAce: $splitAces")
+            logger.info("Computing hand ${String(dealerHand.toUTF8())} ${String(playerHand.toUTF8())} ${split?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ${cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ins: $insurance splitAce: $splitAces")
             val calculatedActions = possibleActions.map { action ->
                 val score = evaluateAction(
                         action,
@@ -77,6 +78,9 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             splitAces: Boolean,
             insurance: Boolean
     ): Pair<Action, BigDecimal> {
+        if (game.canSplit(playerHand, split) && game.shouldSplit(playerHand, split)) {
+            return Pair(Action.SPLIT, BigDecimal(-1))
+        }
         val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, cardsInPlay, splitAces, insurance)
         val performActions = actions.filter { x ->
             game.canPerform(

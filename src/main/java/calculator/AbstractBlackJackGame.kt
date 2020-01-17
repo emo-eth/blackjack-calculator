@@ -25,7 +25,11 @@ abstract class AbstractBlackJackGame {
     }
 
     fun canSplit(playerHand: Hand, split: Hand?): Boolean {
-        return playerHand.size == 2 && split == null && playerHand[0] == playerHand[1]
+        return playerHand.size == 2 && split == null && playerHand[0] == playerHand[1] && playerHand[0] != Card.TEN.num
+    }
+
+    fun shouldSplit(playerHand: Hand, split: Hand?): Boolean {
+        return playerHand.size == 2 && split == null && playerHand[0] == playerHand[1] && (playerHand[0] == Card.ACE.num || playerHand[0] == Card.EIGHT.num)
     }
 
     // https://boardgames.stackexchange.com/questions/27181/blackjack-if-youre-insured-and-bust-do-you-collect-on-the-insurance
