@@ -3,7 +3,7 @@ package calculator.util
 import java.util.logging.Logger
 
 class LRUDBCache<K, V>(private val capacity: Int) {
-    private val logger = Logger.getLogger("LRUDBCache<" + this.javaClass.typeParameters.toString() + ">")
+    private val logger = Logger.getLogger("LRUDBCache")
     private val map = hashMapOf<K, Node<K, V>>()
     private val head: Node<K, V> = Node(null, null)
     private val tail: Node<K, V> = Node(null, null)

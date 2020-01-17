@@ -50,7 +50,7 @@ object MultiClassicGameStateModel {
 
     val logger: Logger = Logger.getLogger("CalculationDatabase")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
-    val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(100000)
+    val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(50000)
     val lock = ReentrantLock()
     val MAX_MAP_ENTRIES = 50000
 
