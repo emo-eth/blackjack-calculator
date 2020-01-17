@@ -17,16 +17,20 @@ class LRUDBCache<K, V>(private val capacity: Int) {
     }
 
     operator fun get(key: K): V? {
+        lock.lock()
         if (map.containsKey(key)) {
             val node = map[key]!!
             remove(node)
             addAtEnd(node)
+            lock.unlock()
             return node.value
         }
+        lock.unlock()
         return null
     }
 
     operator fun set(key: K, value: V) {
+        lock.lock()
         if (map.containsKey(key)) {
             remove(map[key]!!)
         }
@@ -38,6 +42,7 @@ class LRUDBCache<K, V>(private val capacity: Int) {
             remove(first)
             map.remove(first.key)
         }
+        lock.unlock()
     }
 
     fun clear() {
@@ -48,22 +53,22 @@ class LRUDBCache<K, V>(private val capacity: Int) {
 
     private fun remove(node: Node<K, V>) {
         logger.info("Removing cache element")
-        lock.lock()
+//        lock.lock()
         val prev = node.prev!!
         val next = node.next!!
         prev.next = next
         next.prev = prev
-        lock.unlock()
+//        lock.unlock()
     }
 
     private fun addAtEnd(node: Node<K, V>) {
-        lock.lock()
+//        lock.lock()
         val prev = tail.prev!!
         prev.next = node
         node.prev = prev
         node.next = tail
         tail.prev = node
-        lock.unlock()
+//        lock.unlock()
     }
 
     data class Node<K, V>(val key: K?, val value: V?) {
