@@ -5,6 +5,7 @@ import java.math.BigDecimal
 import java.nio.charset.Charset
 import java.sql.SQLException
 import java.util.logging.Logger
+import java.util.stream.Collectors
 
 class MultiHandCalculator(val game: AbstractBlackJackGame) {
     private val logger: Logger = Logger.getLogger("HandCalculator")
@@ -36,12 +37,14 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                 insurance
         )
         val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand)
-        if (actions != null && actions.size != possibleActions.size && !(actions.map{it.first}.contains(Action.SPLIT) && !possibleActions.contains(Action.SPLIT))) {
+        if (actions != null && actions.size != possibleActions.size && !(actions.map { it.first }.contains(Action.SPLIT) && !possibleActions.contains(Action.SPLIT))) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
         if (actions == null || actions.isEmpty()) {
-            logger.info("Computing hand ${String(dealerHand.toUTF8())} ${String(playerHand.toUTF8())} ${split?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ${cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: ""} ins: $insurance splitAce: $splitAces")
-            val calculatedActions = possibleActions.map { action ->
+            logger.info("Computing hand ${String(dealerHand.toUTF8())} ${String(playerHand.toUTF8())} ${split?.toUTF8()?.toString(Charset.defaultCharset())
+                    ?: ""} ${cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset())
+                    ?: ""} ins: $insurance splitAce: $splitAces")
+            val calculatedActions = possibleActions.parallelStream().map { action ->
                 val score = evaluateAction(
                         action,
                         playerHand,
@@ -53,7 +56,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                         splitAces,
                         insurance)
                 Pair(action, score)
-            }
+            }.collect(Collectors.toList())
 
             // sort descending
             val sorted = calculatedActions.sortedBy { x -> -x.second }
@@ -162,16 +165,28 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                 val scores: MutableList<BigDecimal> = mutableListOf()
                 for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
                     val newShoe = shoe.removeCard(card)
-                    for ((card2, prob2) in newShoe.getNextStatesAndProbabilities().shuffled()) {
-                        val newShoe2 = newShoe.removeCard(card2)
-                        val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
-                        val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
-                        // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
-                        // TODO: consider passing in cardsInPlay with a faster computer
-                        val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, null, playerHand.isSoft(), insurance)
-                        val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
-                        scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
+                    newShoe.getNextStatesAndProbabilities().parallelStream().forEach { (card2, prob2) ->
+                        run {
+                            val newShoe2 = newShoe.removeCard(card2)
+                            val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
+                            val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
+                            // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
+                            // TODO: consider passing in cardsInPlay with a faster computer
+                            val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, null, playerHand.isSoft(), insurance)
+                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
+                            scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
+                        }
                     }
+//                    for ((card2, prob2) in newShoe.getNextStatesAndProbabilities().shuffled()) {
+//                        val newShoe2 = newShoe.removeCard(card2)
+//                        val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
+//                        val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
+//                        // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
+//                        // TODO: consider passing in cardsInPlay with a faster computer
+//                        val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, null, playerHand.isSoft(), insurance)
+//                        val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
+//                        scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
+//                    }
                 }
                 scores.reduce { x, y -> x.plus(y) }
             }
