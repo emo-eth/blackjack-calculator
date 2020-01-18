@@ -178,7 +178,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                         // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
                         // don't need to do both hands because classic doesn't hit second hand until first is finished
                         // TODO: consider passing in cardsInPlay with a faster computer
-                        val (nextActionHand, scoreHand) = getBestAction(hand, dealerHand, newShoe, double, Hand.fromCard(Card.fromByte(playerHand[0])), null, playerHand.isSoft(), insurance)
+                        val (nextActionHand, scoreHand) = getBestAction(hand, dealerHand, newShoe, double, Hand.fromCard(Card.fromByte(playerHand[0])), cardsInPlay, playerHand.isSoft(), insurance)
 //                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
                         scores.add(scoreHand.plus(scoreHand).times(prob))
                     }
