@@ -163,20 +163,32 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             }
             (Action.SPLIT) -> {
                 val scores: MutableList<BigDecimal> = mutableListOf()
-                for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
+
+                shoe.getNextStatesAndProbabilities().shuffled().parallelStream().forEach { (card, prob) -> run {
                     val newShoe = shoe.removeCard(card)
-                    newShoe.getNextStatesAndProbabilities().parallelStream().forEach { (card2, prob2) ->
-                        run {
-                            val newShoe2 = newShoe.removeCard(card2)
-                            val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
-                            val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
-                            // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
-                            // TODO: consider passing in cardsInPlay with a faster computer
-                            val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, hand2, null, playerHand.isSoft(), insurance)
-                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
-                            scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
-                        }
-                    }
+                    val hand = Hand.fromCards(Card.fromByte(playerHand[0]), card)
+                    // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
+                    // don't need to do both hands because classic doesn't hit second hand until first is finished
+                    // TODO: consider passing in cardsInPlay with a faster computer
+                    val (nextActionHand, scoreHand) = getBestAction(hand, dealerHand, newShoe, double, Hand.fromCard(Card.fromByte(playerHand[0])), null, playerHand.isSoft(), insurance)
+//                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
+                    scores.add(scoreHand.plus(scoreHand).times(prob))
+                }}
+//                for ((card, prob) in shoe.getNextStatesAndProbabilities().shuffled()) {
+//                    val newShoe = shoe.removeCard(card)
+//                    newShoe.getNextStatesAndProbabilities().parallelStream().forEach { (card2, prob2) ->
+//                        run {
+//                            val newShoe2 = newShoe.removeCard(card2)
+//                            val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
+//                            val hand2 = Hand.fromCards(Card.fromByte(playerHand[0]), card2)
+//                            // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
+//                            // don't need to do both hands because classic doesn't hit second hand until first is finished
+//                            // TODO: consider passing in cardsInPlay with a faster computer
+//                            val (nextActionHand1, scoreHand1) = getBestAction(hand1, dealerHand, newShoe2, double, Hand.fromCard(Card.fromByte(playerHand[0])), null, playerHand.isSoft(), insurance)
+////                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
+//                            scores.add(scoreHand1.times(prob).times(prob2))
+//                        }
+//                    }
 //                    for ((card2, prob2) in newShoe.getNextStatesAndProbabilities().shuffled()) {
 //                        val newShoe2 = newShoe.removeCard(card2)
 //                        val hand1 = Hand.fromCards(Card.fromByte(playerHand[0]), card)
@@ -187,7 +199,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
 //                        val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
 //                        scores.add(scoreHand1.plus(scoreHand2).times(prob).times(prob2))
 //                    }
-                }
+//                }
                 scores.reduce { x, y -> x.plus(y) }
             }
             (Action.INSURANCE) -> {
