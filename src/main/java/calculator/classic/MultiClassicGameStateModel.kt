@@ -52,7 +52,7 @@ object MultiClassicGameStateModel {
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
     val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(150000)
     val lock = ReentrantLock()
-    val MAX_MAP_ENTRIES = 5000
+    val MAX_MAP_ENTRIES = 50
 
 
     private fun toUTF8String(hand: Hand?): String {

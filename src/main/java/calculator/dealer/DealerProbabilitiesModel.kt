@@ -43,7 +43,7 @@ object DealerProbabilitiesModel {
     private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
     private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
     private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(150000)
-    private val MAX_MAP_ENTRIES = 5000
+    private val MAX_MAP_ENTRIES = 50
 
 
 
@@ -186,12 +186,13 @@ object DealerProbabilitiesModel {
             player: Hand,
             dealer: Hand,
             calculations: Map<Int, BigDecimal>) {
-
+        val mapKey = makeMapKey(player, dealer)
+        lruCacheMap[makeMapKey(player, dealer)] = calculations
         if (batchInsertMap.size < MAX_MAP_ENTRIES && MAX_MAP_ENTRIES != 0) {
             logger.info("Inserting into map size ${batchInsertMap.size}")
-            val makeMapKey = makeMapKey(player, dealer)
-            batchInsertMap[makeMapKey] = calculations
-            lruCacheMap[makeMapKey(player, dealer)] = calculations
+            lock.lock()
+            batchInsertMap[mapKey] = calculations
+            lock.unlock()
             return
         }
 
