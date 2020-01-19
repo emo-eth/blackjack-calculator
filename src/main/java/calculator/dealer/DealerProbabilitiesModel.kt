@@ -43,7 +43,7 @@ object DealerProbabilitiesModel {
     private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
     private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
     private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(150000)
-    private val MAX_MAP_ENTRIES = 500
+    private val MAX_MAP_ENTRIES = 5000
 
 
 
