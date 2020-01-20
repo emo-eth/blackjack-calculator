@@ -48,7 +48,7 @@ object MultiClassicGameState : Table() {
 object MultiClassicGameStateModel {
     data class MultiMapKey(val playerHandString: String, val dealerHand: String, val split: String?, val cardsInPlay: String?, val splitAces: Boolean, val insurance: Boolean)
 
-    val logger: Logger = Logger.getLogger("CalculationDatabase")
+    val logger: Logger = Logger.getLogger("MultiClassicGameStateModel")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
     val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(150000)
     val lock = ReentrantLock()

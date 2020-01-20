@@ -39,7 +39,7 @@ object DealerProbabilitiesModel {
                 Database.connect(dataSource)
             }()
     private val lock = ReentrantLock()
-    private val logger: Logger = Logger.getLogger("CalculationDatabase")
+    private val logger: Logger = Logger.getLogger("DealerProbabilitiesModel")
     private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
     private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
     private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(150000)
