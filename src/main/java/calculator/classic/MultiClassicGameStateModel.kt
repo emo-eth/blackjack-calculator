@@ -25,12 +25,12 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
 object MultiClassicGameState : Table() {
-    val player = varchar("player", 22).primaryKey(0)
-    val dealer = char("dealer").primaryKey(1)
-    val split = varchar("split", 22).primaryKey(2)
-    val cardsInPlay = varchar("cardsInPlay", 22).primaryKey(3)
-    val splitAces = bool("split_aces").primaryKey(4)
-    val insurance = bool("insurance").primaryKey(5)
+    val player = varchar("player", 22)
+    val dealer = char("dealer")
+    val split = varchar("split", 22)
+    val cardsInPlay = varchar("cardsInPlay", 22)
+    val splitAces = bool("split_aces")
+    val insurance = bool("insurance")
     val actionHit = double("action_hit").nullable()
     val actionStand = double("action_stand").nullable()
     val actionSplit = double("action_split").nullable()
@@ -41,7 +41,7 @@ object MultiClassicGameState : Table() {
 //        index(false, player)
 //        index(false, dealer)
 //        index(false, split)
-//        index(false, player, dealer, split, cardsInPlay)
+        index(false, player, dealer, cardsInPlay)
     }
 }
 
