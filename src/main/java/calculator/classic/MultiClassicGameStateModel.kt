@@ -28,7 +28,7 @@ object MultiClassicGameState : Table() {
     val player = varchar("player", 22)
     val dealer = char("dealer")
     val split = varchar("split", 22)
-    val cardsInPlay = varchar("cardsInPlay", 22)
+    val cardsInPlay = varchar("cards_in_play", 22)
     val splitAces = bool("split_aces")
     val insurance = bool("insurance")
     val actionHit = double("action_hit").nullable()
