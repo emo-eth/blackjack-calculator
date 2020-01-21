@@ -132,7 +132,7 @@ object DealerProbabilitiesModel {
     ): Map<Int, BigDecimal> {
         val fetched = lruCacheMap[makeMapKey(player, dealer)]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         val resultRow = transaction {
@@ -159,7 +159,7 @@ object DealerProbabilitiesModel {
         val mapKey = makeMapKey(player, dealer)
         val fetched = lruCacheMap[mapKey]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         val resultRow = transaction {
@@ -189,7 +189,7 @@ object DealerProbabilitiesModel {
         val mapKey = makeMapKey(player, dealer)
         lruCacheMap[makeMapKey(player, dealer)] = calculations
         if (batchInsertMap.size < MAX_MAP_ENTRIES && MAX_MAP_ENTRIES != 0) {
-            logger.info("Inserting into map size ${batchInsertMap.size}")
+//            logger.info("Inserting into map size ${batchInsertMap.size}")
             lock.lock()
             batchInsertMap[mapKey] = calculations
             lock.unlock()
@@ -202,7 +202,6 @@ object DealerProbabilitiesModel {
 
         try {
             transaction {
-                logger.info("begin transaction")
 
                 DealerProbabilities.batchInsert(batchInsertMap.entries, true) { entry ->
                     val (playerDealer, dealerProbabilities) = entry

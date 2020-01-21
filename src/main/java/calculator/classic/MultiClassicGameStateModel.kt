@@ -101,7 +101,7 @@ object MultiClassicGameStateModel {
         val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
         val fetched = lruCache[mapKey]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         val resultRow = transaction {
@@ -136,7 +136,7 @@ object MultiClassicGameStateModel {
             lock.lock()
             multiBatchInsertMap[mapKey] = calculations
             lock.unlock()
-            logger.info("Inserted into insertMap")
+//            logger.info("Inserted into insertMap")
             return
         }
 
