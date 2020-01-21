@@ -104,20 +104,21 @@ object MultiClassicGameStateModel {
             logger.info("Cache map hit")
             return fetched
         }
-        val resultRow = transaction {
-            MultiClassicGameState.select {
-                (MultiClassicGameState.insurance.eq(insurance) and
-                        MultiClassicGameState.split.eq(split?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
-                        MultiClassicGameState.cardsInPlay.eq(cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
-                        MultiClassicGameState.dealer.eq(dealer.toUTF8()[0].toChar()) and
-                        MultiClassicGameState.splitAces.eq(splitAces) and
-                        MultiClassicGameState.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
-            }.firstOrNull()
-        } ?: return null
-
-        val result = convertRow(resultRow)
-        lruCache[mapKey] = result
-        return result
+        return null
+//        val resultRow = transaction {
+//            MultiClassicGameState.select {
+//                (MultiClassicGameState.insurance.eq(insurance) and
+//                        MultiClassicGameState.split.eq(split?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
+//                        MultiClassicGameState.cardsInPlay.eq(cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
+//                        MultiClassicGameState.dealer.eq(dealer.toUTF8()[0].toChar()) and
+//                        MultiClassicGameState.splitAces.eq(splitAces) and
+//                        MultiClassicGameState.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
+//            }.firstOrNull()
+//        } ?: return null
+//
+//        val result = convertRow(resultRow)
+//        lruCache[mapKey] = result
+//        return result
 
     }
 
@@ -129,47 +130,48 @@ object MultiClassicGameStateModel {
             dealer: Hand,
             player: Hand,
             calculations: List<Pair<Action, BigDecimal>>) {
-        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
-        lruCache[mapKey] = calculations
-
-        if (multiBatchInsertMap.size < MAX_MAP_ENTRIES) {
-            lock.lock()
-            multiBatchInsertMap[mapKey] = calculations
-            lock.unlock()
-            logger.info("Inserted into insertMap")
-            return
-        }
-
-        logger.info("Map reached threshold, batch inserting")
-
-
-        lock.lock()
-        try {
-            transaction {
-                MultiClassicGameState.batchInsert(multiBatchInsertMap.entries, true) { entry ->
-                    val (mapKey, rowCalculations) = entry
-                    val calculationMap = rowCalculations.map {
-                        it.first to it.second
-                    }.toMap()
-                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow) = mapKey
-                    this[MultiClassicGameState.insurance] = insuranceRow
-                    this[MultiClassicGameState.split] = splitString ?: ""
-                    this[MultiClassicGameState.cardsInPlay] = cardsInPlayString ?: ""
-                    this[MultiClassicGameState.player] = playerString
-                    this[MultiClassicGameState.dealer] = dealerString[0]
-                    this[MultiClassicGameState.splitAces] = splitAcesRow
-                    this[actionHit] = calculationMap[Action.HIT]?.toDouble()
-                    this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
-                    this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()
-                    this[actionInsurance] = calculationMap[Action.INSURANCE]?.toDouble()
-                    this[actionStand] = calculationMap[Action.STAND]?.toDouble()
-                }
-            }
-            multiBatchInsertMap.clear()
-        } finally {
-            lock.unlock()
-        }
-        logger.info("Clearing map")
+        return
+//        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
+//        lruCache[mapKey] = calculations
+//
+//        if (multiBatchInsertMap.size < MAX_MAP_ENTRIES) {
+//            lock.lock()
+//            multiBatchInsertMap[mapKey] = calculations
+//            lock.unlock()
+//            logger.info("Inserted into insertMap")
+//            return
+//        }
+//
+//        logger.info("Map reached threshold, batch inserting")
+//
+//
+//        lock.lock()
+//        try {
+//            transaction {
+//                MultiClassicGameState.batchInsert(multiBatchInsertMap.entries, true) { entry ->
+//                    val (mapKey, rowCalculations) = entry
+//                    val calculationMap = rowCalculations.map {
+//                        it.first to it.second
+//                    }.toMap()
+//                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow) = mapKey
+//                    this[MultiClassicGameState.insurance] = insuranceRow
+//                    this[MultiClassicGameState.split] = splitString ?: ""
+//                    this[MultiClassicGameState.cardsInPlay] = cardsInPlayString ?: ""
+//                    this[MultiClassicGameState.player] = playerString
+//                    this[MultiClassicGameState.dealer] = dealerString[0]
+//                    this[MultiClassicGameState.splitAces] = splitAcesRow
+//                    this[actionHit] = calculationMap[Action.HIT]?.toDouble()
+//                    this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
+//                    this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()
+//                    this[actionInsurance] = calculationMap[Action.INSURANCE]?.toDouble()
+//                    this[actionStand] = calculationMap[Action.STAND]?.toDouble()
+//                }
+//            }
+//            multiBatchInsertMap.clear()
+//        } finally {
+//            lock.unlock()
+//        }
+//        logger.info("Clearing map")
 
 
     }
