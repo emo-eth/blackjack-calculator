@@ -25,12 +25,12 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
 object MultiClassicGameState : Table() {
-    val player = varchar("player", 22).primaryKey(0)
-    val dealer = char("dealer").primaryKey(1)
-    val split = varchar("split", 22).primaryKey(2)
-    val cardsInPlay = varchar("cardsInPlay", 22).primaryKey(3)
-    val splitAces = bool("split_aces").primaryKey(4)
-    val insurance = bool("insurance").primaryKey(5)
+    val player = varchar("player", 22)
+    val dealer = char("dealer")
+    val split = varchar("split", 22)
+    val cardsInPlay = varchar("cards_in_play", 22)
+    val splitAces = bool("split_aces")
+    val insurance = bool("insurance")
     val actionHit = double("action_hit").nullable()
     val actionStand = double("action_stand").nullable()
     val actionSplit = double("action_split").nullable()
@@ -41,18 +41,18 @@ object MultiClassicGameState : Table() {
 //        index(false, player)
 //        index(false, dealer)
 //        index(false, split)
-//        index(false, player, dealer, split, cardsInPlay)
+        index(false, player, dealer, cardsInPlay)
     }
 }
 
 object MultiClassicGameStateModel {
     data class MultiMapKey(val playerHandString: String, val dealerHand: String, val split: String?, val cardsInPlay: String?, val splitAces: Boolean, val insurance: Boolean)
 
-    val logger: Logger = Logger.getLogger("CalculationDatabase")
+    val logger: Logger = Logger.getLogger("MultiClassicGameStateModel")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
-    val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(200000)
+    val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(150000)
     val lock = ReentrantLock()
-    val MAX_MAP_ENTRIES = 50000
+    val MAX_MAP_ENTRIES = 5000
 
 
     private fun toUTF8String(hand: Hand?): String {
@@ -101,7 +101,7 @@ object MultiClassicGameStateModel {
         val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
         val fetched = lruCache[mapKey]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         return null
@@ -137,7 +137,7 @@ object MultiClassicGameStateModel {
 //            lock.lock()
 //            multiBatchInsertMap[mapKey] = calculations
 //            lock.unlock()
-//            logger.info("Inserted into insertMap")
+////            logger.info("Inserted into insertMap")
 //            return
 //        }
 //

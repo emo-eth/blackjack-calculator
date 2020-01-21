@@ -39,10 +39,10 @@ object DealerProbabilitiesModel {
                 Database.connect(dataSource)
             }()
     private val lock = ReentrantLock()
-    private val logger: Logger = Logger.getLogger("CalculationDatabase")
+    private val logger: Logger = Logger.getLogger("DealerProbabilitiesModel")
     private val batchInsertMap: ConcurrentMap<Pair<String, String>, Map<Int, BigDecimal>> = ConcurrentHashMap()
     private val insertCacheSet: MutableSet<Pair<String, String>> = mutableSetOf()
-    private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(200000)
+    private val lruCacheMap: LRUDBCache<Pair<String, String>, Map<Int, BigDecimal>> = LRUDBCache(150000)
     private val MAX_MAP_ENTRIES = 5000
 
 
@@ -132,7 +132,7 @@ object DealerProbabilitiesModel {
     ): Map<Int, BigDecimal> {
         val fetched = lruCacheMap[makeMapKey(player, dealer)]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         val resultRow = transaction {
@@ -159,7 +159,7 @@ object DealerProbabilitiesModel {
         val mapKey = makeMapKey(player, dealer)
         val fetched = lruCacheMap[mapKey]
         if (fetched != null) {
-            logger.info("Cache map hit")
+//            logger.info("Cache map hit")
             return fetched
         }
         val resultRow = transaction {
@@ -186,12 +186,13 @@ object DealerProbabilitiesModel {
             player: Hand,
             dealer: Hand,
             calculations: Map<Int, BigDecimal>) {
-
+        val mapKey = makeMapKey(player, dealer)
+        lruCacheMap[makeMapKey(player, dealer)] = calculations
         if (batchInsertMap.size < MAX_MAP_ENTRIES && MAX_MAP_ENTRIES != 0) {
-            logger.info("Inserting into map size ${batchInsertMap.size}")
-            val makeMapKey = makeMapKey(player, dealer)
-            batchInsertMap[makeMapKey] = calculations
-            lruCacheMap[makeMapKey(player, dealer)] = calculations
+//            logger.info("Inserting into map size ${batchInsertMap.size}")
+            lock.lock()
+            batchInsertMap[mapKey] = calculations
+            lock.unlock()
             return
         }
 
@@ -201,7 +202,6 @@ object DealerProbabilitiesModel {
 
         try {
             transaction {
-                logger.info("begin transaction")
 
                 DealerProbabilities.batchInsert(batchInsertMap.entries, true) { entry ->
                     val (playerDealer, dealerProbabilities) = entry

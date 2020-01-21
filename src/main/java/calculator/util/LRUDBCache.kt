@@ -39,6 +39,7 @@ class LRUDBCache<K, V>(private val capacity: Int) {
         addAtEnd(node)
         if (map.size > capacity) {
             val first = head.next!!
+            logger.info("Removing cache element")
             remove(first)
             map.remove(first.key)
         }
@@ -52,7 +53,6 @@ class LRUDBCache<K, V>(private val capacity: Int) {
     }
 
     private fun remove(node: Node<K, V>) {
-        logger.info("Removing cache element")
 //        lock.lock()
         val prev = node.prev!!
         val next = node.next!!

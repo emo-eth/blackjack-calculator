@@ -4,6 +4,7 @@ import calculator.Card
 import calculator.Hand
 import calculator.Shoe
 import java.math.BigDecimal
+import java.util.stream.Collectors
 
 fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe): Map<Int, BigDecimal> {
     val dealerProbs = getDealerResultProbs(dealerCard, shoe)
@@ -16,8 +17,7 @@ fun calculateAndInsertDealerProbs(playerHand: Hand, dealerCard: Card, shoe: Shoe
  */
 fun getDealerResultProbs(dealerCard: Card, shoe: Shoe): Map<Int, BigDecimal> {
     val dealerHand = Hand.fromCard(dealerCard)
-    val seqList = dealerResultProbsSeq(dealerHand, shoe, BigDecimal(1))
-            .toList()
+    val seqList = dealerResultProbs(dealerHand, shoe, BigDecimal(1))
     return seqList
             .groupByTo(hashMapOf(), { pair -> pair.first }, { pair -> pair.second })
             .entries.map {
@@ -42,6 +42,25 @@ fun dealerResultProbsSeq(hand: Hand, shoe: Shoe, prob: BigDecimal): Sequence<Pai
             yieldAll(dealerResultProbsSeq(newHand, newShoe, prob.times(newProb)))
         }
     }
+}
+
+/**
+ * Generator sequence of dealer Pair(Score, Probability) to be rolled up by Score, eg [(17, 0.25), (18, 0.03)]
+ */
+fun dealerResultProbs(hand: Hand, shoe: Shoe, prob: BigDecimal): List<Pair<Int, BigDecimal>> {
+    var preferredVal = hand.getPreferredValue()
+    if (dealerFinished(hand)) {
+        if (preferredVal > 21) {
+            preferredVal = 22
+        }
+        return listOf(Pair(preferredVal, prob))
+    }
+    return shoe.getNextStatesAndProbabilities().shuffled().parallelStream().map { (card, newProb) ->
+        val newHand = hand.addCard(card)
+        val newShoe = shoe.removeCard(card)
+        val totalProb = prob.times(newProb)
+        dealerResultProbs(newHand, newShoe, totalProb)
+    }.flatMap { it.stream() }.collect(Collectors.toList())
 }
 
 /**
