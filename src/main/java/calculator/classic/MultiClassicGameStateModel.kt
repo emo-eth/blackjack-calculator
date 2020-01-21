@@ -130,10 +130,9 @@ object MultiClassicGameStateModel {
             dealer: Hand,
             player: Hand,
             calculations: List<Pair<Action, BigDecimal>>) {
+        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
+        lruCache[mapKey] = calculations
         return
-//        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
-//        lruCache[mapKey] = calculations
-//
 //        if (multiBatchInsertMap.size < MAX_MAP_ENTRIES) {
 //            lock.lock()
 //            multiBatchInsertMap[mapKey] = calculations
