@@ -24,8 +24,8 @@ abstract class AbstractBlackJackGame {
                 || (!double && !splitAces && playerHand.getPreferredValue() < 21))
     }
 
-    fun canSplit(playerHand: Hand, split: Hand?): Boolean {
-        return playerHand.size == 2 && split == null && playerHand[0] == playerHand[1] && playerHand[0] != Card.TEN.num
+    fun canSplit(playerHand: Hand, split: Hand?, numSplits: Int): Boolean {
+        return playerHand.size == 2 && numSplits < 3 && playerHand[0] == playerHand[1] && playerHand[0] != Card.TEN.num
     }
 
     fun shouldSplit(playerHand: Hand, split: Hand?): Boolean {
@@ -48,7 +48,8 @@ abstract class AbstractBlackJackGame {
             dealerHand: Hand,
             split: Hand?,
             splitAces: Boolean,
-            insurance: Boolean
+            insurance: Boolean,
+            numSplits: Int
     ): List<Action> {
         val actions = mutableListOf(Action.STAND)
         if (splitAces) {
@@ -59,7 +60,7 @@ abstract class AbstractBlackJackGame {
         // we don't care about double and splitAces here because this state is reachable regardless
         if (canHit(playerHand, false, false)) actions.add(Action.HIT)
         if (canDouble(playerHand, false, false)) actions.add(Action.DOUBLE)
-        if (canSplit(playerHand, split)) actions.add(Action.SPLIT)
+        if (canSplit(playerHand, split, numSplits)) actions.add(Action.SPLIT)
 //        if (game.canInsure(playerHand, dealerHand, split, insurance)) actions.add(Action.INSURANCE)
 
         return actions
@@ -72,7 +73,8 @@ abstract class AbstractBlackJackGame {
             double: Boolean,
             split: Hand?,
             splitAces: Boolean,
-            insurance: Boolean
+            insurance: Boolean,
+            numSplits: Int
     ): Boolean {
         return when (action) {
             Action.STAND -> true
@@ -85,7 +87,7 @@ abstract class AbstractBlackJackGame {
                 false
 //                game.canInsure(playerHand, dealerHand, split, insurance)
             Action.SPLIT ->
-                canSplit(playerHand, split)
+                canSplit(playerHand, split, numSplits)
             Action.SURRENDER ->
                 false
         }

@@ -9,8 +9,8 @@ class MultiDatabasePopulator() {
     val game = ClassicBlackJackGame
 
 
-    fun main(cardsInPlay: Hand) {
-        DealerProbabilitiesModel.loadFullCacheMap()
+    fun main(cardsInPlay: Hand?) {
+//        DealerProbabilitiesModel.loadFullCacheMap()
         db.initialize()
 //        println(args[0].toInt())
         println(Runtime.getRuntime().availableProcessors())
@@ -25,11 +25,11 @@ class MultiDatabasePopulator() {
         getHouseEdge(cardsInPlay)
     }
 
-    fun doForDealerCard(dealerCard: Card, cardsInPlay: Hand) {
+    fun doForDealerCard(dealerCard: Card, cardsInPlay: Hand?) {
         var sum = BigDecimal(0)
         val shoe = game.getStartingShoe()
         val dealer = Hand.fromCard(dealerCard)
-        val shoeAfterCardsInPlay = shoe.removeHand(cardsInPlay)
+        val shoeAfterCardsInPlay = if (cardsInPlay == null) shoe else shoe.removeHand(cardsInPlay)
         val shoeAfterDealer = shoeAfterCardsInPlay.removeCard(dealerCard)
         val nextStatesAndProbabilities = shoeAfterDealer.getNextStatesAndProbabilities().shuffled()
         val classicHandCalculator = MultiHandCalculator(game)
@@ -48,8 +48,9 @@ class MultiDatabasePopulator() {
                         false,
                         null,
                         cardsInPlay,
-                        splitAces = false,
-                        insurance = false
+                        false,
+                        false,
+                        0
                 )
                 sum = sum.plus(bigDecimal.times(prob2 * prob3))
             }
@@ -57,10 +58,10 @@ class MultiDatabasePopulator() {
         println(sum)
     }
 
-    fun getHouseEdge(cardsInPlay: Hand) {
+    fun getHouseEdge(cardsInPlay: Hand?) {
         var sum = BigDecimal(0)
         val startingShoe = game.getStartingShoe()
-        val shoe = startingShoe.removeHand(cardsInPlay)
+        val shoe = if (cardsInPlay == null) startingShoe else startingShoe.removeHand(cardsInPlay)
         val nextStatesAndProbabilities = shoe.getNextStatesAndProbabilities()
         val classicHandCalculator = MultiHandCalculator(game)
         for ((dealerCard, prob) in nextStatesAndProbabilities) {
@@ -82,8 +83,9 @@ class MultiDatabasePopulator() {
                             false,
                             null,
                             cardsInPlay,
-                            splitAces = false,
-                            insurance = false
+                            false,
+                            false,
+                            0
                     )
                     sum = sum.plus(expectedUtility.times(prob * prob2 * prob3))
                 }
@@ -95,6 +97,6 @@ class MultiDatabasePopulator() {
 
 
 fun main() {
-    MultiDatabasePopulator().main(Hand.fromCards(Card.SEVEN, Card.EIGHT, Card.NINE, Card.TEN))
+    MultiDatabasePopulator().main(Hand.fromCards(Card.FIVE, Card.SIX, Card.SEVEN, Card.TEN))
 }
 

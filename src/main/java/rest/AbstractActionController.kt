@@ -15,7 +15,7 @@ abstract class AbstractActionController(private val calculator: HandCalculator) 
         val splitHand = if (split.isEmpty()) null else Hand.fromUtf8(split.toByteArray())
         val startingShoe = calculator.game.getStartingShoe()
         val shoe = if (splitHand == null) startingShoe.removeHand(playerHand) else startingShoe.removeHands(playerHand, splitHand)
-        val (action, score) = calculator.getBestAction(playerHand, dealerHand, shoe, false, splitHand, false, insurance)
+        val (action, score) = calculator.getBestAction(playerHand, dealerHand, shoe, false, splitHand, false, insurance, 0)
         return ActionResponse(action, score.toDouble())
     }
 }

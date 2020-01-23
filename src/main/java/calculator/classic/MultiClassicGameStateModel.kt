@@ -13,10 +13,12 @@ import calculator.classic.MultiClassicGameState.insurance
 import calculator.classic.MultiClassicGameState.player
 import calculator.classic.MultiClassicGameState.split
 import calculator.classic.MultiClassicGameState.cardsInPlay
+import calculator.classic.MultiClassicGameState.numSplits
 import calculator.classic.MultiClassicGameState.splitAces
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.postgresql.ds.PGPoolingDataSource
 import java.math.BigDecimal
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +30,7 @@ object MultiClassicGameState : Table() {
     val player = varchar("player", 22)
     val dealer = char("dealer")
     val split = varchar("split", 22)
+    val numSplits = char("can_split")
     val cardsInPlay = varchar("cards_in_play", 22)
     val splitAces = bool("split_aces")
     val insurance = bool("insurance")
@@ -46,13 +49,24 @@ object MultiClassicGameState : Table() {
 }
 
 object MultiClassicGameStateModel {
-    data class MultiMapKey(val playerHandString: String, val dealerHand: String, val split: String?, val cardsInPlay: String?, val splitAces: Boolean, val insurance: Boolean)
+    val db = {
+        val dataSource = PGPoolingDataSource()
+        dataSource.databaseName = System.getenv("POSTGRES_DATABASE")
+        dataSource.user = System.getenv("POSTGRES_USER")
+        dataSource.portNumber = System.getenv("POSTGRES_PORT").toInt()
+        dataSource.serverName = System.getenv("POSTGRES_HOST")
+        dataSource.password = System.getenv("POSTGRES_PASSWORD")
+        dataSource.maxConnections = 300
+        Database.connect(dataSource)
+    }()
+
+    data class MultiMapKey(val playerHandString: String, val dealerHand: String, val split: String?, val cardsInPlay: String?, val splitAces: Boolean, val insurance: Boolean, val numSplits: Int)
 
     val logger: Logger = Logger.getLogger("MultiClassicGameStateModel")
     val multiBatchInsertMap: ConcurrentMap<MultiMapKey, List<Pair<Action, BigDecimal>>> = ConcurrentHashMap()
     val lruCache: LRUDBCache<MultiMapKey, List<Pair<Action, BigDecimal>>> = LRUDBCache(150000)
     val lock = ReentrantLock()
-    val MAX_MAP_ENTRIES = 5000
+    val MAX_MAP_ENTRIES = 50000
 
 
     private fun toUTF8String(hand: Hand?): String {
@@ -84,8 +98,9 @@ object MultiClassicGameStateModel {
                    cardsInPlay: Hand?,
                    splitAces: Boolean,
                    dealer: Hand,
-                   player: Hand): MultiMapKey {
-        return MultiMapKey(toUTF8String(player), toUTF8String(dealer), toUTF8String(split), toUTF8String(cardsInPlay), splitAces, insurance)
+                   player: Hand,
+                    numSplits: Int): MultiMapKey {
+        return MultiMapKey(toUTF8String(player), toUTF8String(dealer), toUTF8String(split), toUTF8String(cardsInPlay), splitAces, insurance, numSplits)
     }
 
 
@@ -96,9 +111,10 @@ object MultiClassicGameStateModel {
             cardsInPlay: Hand?,
             splitAces: Boolean,
             dealer: Hand,
-            player: Hand
+            player: Hand,
+            numSplits: Int
     ): List<Pair<Action, BigDecimal>>? {
-        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
+        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player, numSplits)
         val fetched = lruCache[mapKey]
         if (fetched != null) {
 //            logger.info("Cache map hit")
@@ -112,6 +128,7 @@ object MultiClassicGameStateModel {
 //                        MultiClassicGameState.cardsInPlay.eq(cardsInPlay?.toUTF8()?.toString(Charset.defaultCharset()) ?: "") and
 //                        MultiClassicGameState.dealer.eq(dealer.toUTF8()[0].toChar()) and
 //                        MultiClassicGameState.splitAces.eq(splitAces) and
+//                        MultiClassicGameState.numSplits.eq(numSplits.toChar() + 1) and
 //                        MultiClassicGameState.player.eq(player.toUTF8().toString(Charset.defaultCharset())))
 //            }.firstOrNull()
 //        } ?: return null
@@ -129,8 +146,9 @@ object MultiClassicGameStateModel {
             splitAces: Boolean,
             dealer: Hand,
             player: Hand,
+            numSplits: Int,
             calculations: List<Pair<Action, BigDecimal>>) {
-        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player)
+        val mapKey = makeMultiMapKey(insurance, split, cardsInPlay, splitAces, dealer, player, numSplits)
         lruCache[mapKey] = calculations
         return
 //        if (multiBatchInsertMap.size < MAX_MAP_ENTRIES) {
@@ -152,13 +170,14 @@ object MultiClassicGameStateModel {
 //                    val calculationMap = rowCalculations.map {
 //                        it.first to it.second
 //                    }.toMap()
-//                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow) = mapKey
+//                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow, rowNumSplits) = mapKey
 //                    this[MultiClassicGameState.insurance] = insuranceRow
 //                    this[MultiClassicGameState.split] = splitString ?: ""
 //                    this[MultiClassicGameState.cardsInPlay] = cardsInPlayString ?: ""
 //                    this[MultiClassicGameState.player] = playerString
 //                    this[MultiClassicGameState.dealer] = dealerString[0]
 //                    this[MultiClassicGameState.splitAces] = splitAcesRow
+//                    this[MultiClassicGameState.numSplits] = rowNumSplits.toChar() + 1
 //                    this[actionHit] = calculationMap[Action.HIT]?.toDouble()
 //                    this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
 //                    this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()
@@ -193,13 +212,14 @@ object MultiClassicGameStateModel {
                     val calculationMap = rowCalculations.map {
                         it.first to it.second
                     }.toMap()
-                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow) = mapKey
+                    val (playerString, dealerString, splitString, cardsInPlayString, splitAcesRow, insuranceRow, numSplitsRow) = mapKey
                     this[insurance] = insuranceRow
                     this[split] = splitString ?: ""
                     this[player] = playerString
                     this[dealer] = dealerString[0]
                     this[cardsInPlay] = cardsInPlayString ?: ""
                     this[splitAces] = splitAcesRow
+                    this[numSplits] = numSplitsRow.toChar() + 1
                     this[actionHit] = calculationMap[Action.HIT]?.toDouble()
                     this[actionDouble] = calculationMap[Action.DOUBLE]?.toDouble()
                     this[actionSplit] = calculationMap[Action.SPLIT]?.toDouble()

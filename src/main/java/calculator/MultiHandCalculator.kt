@@ -28,15 +28,18 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                             split: Hand?,
                             cardsInPlay: Hand?,
                             splitAces: Boolean,
-                            insurance: Boolean): List<Pair<Action, BigDecimal>> {
+                            insurance: Boolean,
+                            numSplits: Int): List<Pair<Action, BigDecimal>> {
         val possibleActions: List<Action> = game.getAllPossibleActions(
                 playerHand,
                 dealerHand,
                 split,
                 splitAces,
-                insurance
+                insurance,
+                numSplits
         )
-        val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand)
+        // TODO: add numsplits i guess
+        val actions = db.getHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand, numSplits)
         if (actions != null && actions.size != possibleActions.size && !(actions.map { it.first }.contains(Action.SPLIT) && !possibleActions.contains(Action.SPLIT))) {
             throw Exception("Mismatched actions, possible: ${possibleActions.joinToString(",")}, received: ${actions.joinToString(",")}. Player value ${playerHand.getPreferredValue()}")
         }
@@ -54,7 +57,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                         split,
                         cardsInPlay,
                         splitAces,
-                        insurance)
+                        insurance,
+                        numSplits)
                 Pair(action, score)
             }.collect(Collectors.toList())
 
@@ -62,7 +66,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             val sorted = calculatedActions.sortedBy { x -> -x.second }
 
             try {
-                db.insertHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand, sorted)
+                db.insertHand(insurance, split, cardsInPlay, splitAces, dealerHand, playerHand, numSplits, sorted)
             } catch (ex: SQLException) {
                 println(ex.message)
             }
@@ -79,12 +83,13 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             split: Hand?,
             cardsInPlay: Hand?,
             splitAces: Boolean,
-            insurance: Boolean
+            insurance: Boolean,
+            numSplits: Int
     ): Pair<Action, BigDecimal> {
-        if (game.canSplit(playerHand, split) && game.shouldSplit(playerHand, split)) {
-            return Pair(Action.SPLIT, BigDecimal(-1))
-        }
-        val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, cardsInPlay, splitAces, insurance)
+//        if (game.canSplit(playerHand, split) && game.shouldSplit(playerHand, split)) {
+//            return Pair(Action.SPLIT, BigDecimal(-1))
+//        }
+        val actions = getActionsAndScores(playerHand, dealerHand, shoe, double, split, cardsInPlay, splitAces, insurance, numSplits)
         val performActions = actions.filter { x ->
             game.canPerform(
                     x.first,
@@ -93,7 +98,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                     double,
                     split,
                     splitAces,
-                    insurance
+                    insurance,
+                    numSplits
             )
         }
         return performActions[0]
@@ -108,7 +114,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
             split: Hand?,
             cardsInPlay: Hand?,
             splitAces: Boolean,
-            insurance: Boolean
+            insurance: Boolean,
+            numSplits: Int
     ): BigDecimal {
         return when (action) {
             (Action.STAND) -> {
@@ -140,7 +147,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                                 split,
                                 cardsInPlay,
                                 splitAces,
-                                insurance
+                                insurance,
+                                numSplits
                         )
                         scores.add(prob.times(score))
                     }
@@ -161,7 +169,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                                 split,
                                 cardsInPlay,
                                 splitAces,
-                                insurance
+                                insurance,
+                                numSplits
                         )
                         scores.add(prob.times(score))
                     }
@@ -178,7 +187,7 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                         // for n cards: in stand and double, pass resulting hand as the 'split' column for the split hand
                         // don't need to do both hands because classic doesn't hit second hand until first is finished
                         // TODO: consider passing in cardsInPlay with a faster computer
-                        val (nextActionHand, scoreHand) = getBestAction(hand, dealerHand, newShoe, double, Hand.fromCard(Card.fromByte(playerHand[0])), cardsInPlay, playerHand.isSoft(), insurance)
+                        val (nextActionHand, scoreHand) = getBestAction(hand, dealerHand, newShoe, double, Hand.fromCard(Card.fromByte(playerHand[0])), cardsInPlay, playerHand.isSoft(), insurance, numSplits + 1)
 //                            val (nextActionHand2, scoreHand2) = getBestAction(hand2, dealerHand, newShoe2, double, hand1, null, playerHand.isSoft(), insurance)
                         scores.add(scoreHand.plus(scoreHand).times(prob))
                     }
@@ -223,7 +232,8 @@ class MultiHandCalculator(val game: AbstractBlackJackGame) {
                         split,
                         cardsInPlay,
                         splitAces,
-                        true
+                        true,
+                        numSplits
                 )
                 // subtract out insurance
                 score.minus(BigDecimal(0.5)).times(probDealerDoesNotHaveBlackjack)

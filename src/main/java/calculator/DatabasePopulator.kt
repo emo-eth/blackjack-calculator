@@ -43,8 +43,9 @@ class DatabasePopulator(private val game: AbstractBlackJackGame, private val db:
                         shoeAfterPlayerCard2,
                         false,
                         null,
-                        splitAces = false,
-                        insurance = false
+                        false,
+                        false,
+                        0
                 )
                 sum = sum.plus(bigDecimal.times(prob2 * prob3))
             }
@@ -75,8 +76,9 @@ class DatabasePopulator(private val game: AbstractBlackJackGame, private val db:
                             shoeAfterPlayerCard2,
                             false,
                             null,
-                            splitAces = false,
-                            insurance = false
+                            false,
+                            false,
+                            0
                     )
                     sum = sum.plus(expectedUtility.times(prob * prob2 * prob3))
                 }

@@ -19,7 +19,7 @@ class MutliClassicActionController {
         MultiClassicGameStateModel.initialize()
     }
 
-    fun getActionHelper(player: String, dealer: String, insurance: Boolean, split: String?, cardsInPlay: String?): ActionResponse {
+    fun getActionHelper(player: String, dealer: String, insurance: Boolean, split: String?, cardsInPlay: String?, numSplits: Int): ActionResponse {
         logger.info("GET $dealer, $player, $split, $cardsInPlay")
         val playerHand = Hand.fromUtf8(player.toByteArray())
         val dealerHand = Hand.fromUtf8(dealer.toByteArray())
@@ -34,14 +34,14 @@ class MutliClassicActionController {
         if (cardsInPlayHand != null) {
             shoe = shoe.removeHand(cardsInPlayHand)
         }
-        val (action, score) = handCalc.getBestAction(playerHand, dealerHand, shoe, false, splitHand, cardsInPlayHand, false, false)
+        val (action, score) = handCalc.getBestAction(playerHand, dealerHand, shoe, false, splitHand, cardsInPlayHand, false, false, numSplits)
         return ActionResponse(action, score.toDouble())
     }
 
     @GetMapping("/multiClassicAction")
     fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "cardsInPlay") cardsInPlay: String?, @RequestParam(value="insurance") insurance: Boolean): ActionResponse {
 
-        val returnVal = this.getActionHelper(player, dealer, insurance, split, cardsInPlay)
+        val returnVal = this.getActionHelper(player, dealer, insurance, split, cardsInPlay, 0)
 //        handCalc.db.flushCache()
 //        DealerProbabilitiesModel.flushCache()
         return returnVal
