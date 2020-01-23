@@ -39,9 +39,9 @@ class MutliClassicActionController {
     }
 
     @GetMapping("/multiClassicAction")
-    fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "cardsInPlay") cardsInPlay: String?, @RequestParam(value="insurance") insurance: Boolean): ActionResponse {
+    fun getAction(@RequestParam(value = "player") player: String, @RequestParam(value = "dealer") dealer: String, @RequestParam(value = "split") split: String?, @RequestParam(value = "cardsInPlay") cardsInPlay: String?, @RequestParam(value="insurance") insurance: Boolean, @RequestParam(value="numSplits") numSplits: Int): ActionResponse {
 
-        val returnVal = this.getActionHelper(player, dealer, insurance, split, cardsInPlay, 0)
+        val returnVal = this.getActionHelper(player, dealer, insurance, split, cardsInPlay, numSplits)
 //        handCalc.db.flushCache()
 //        DealerProbabilitiesModel.flushCache()
         return returnVal
