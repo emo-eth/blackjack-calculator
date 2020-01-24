@@ -4,8 +4,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
-class LRUDBCache<K, V>(private val capacity: Int) {
-    private val logger = Logger.getLogger("LRUDBCache")
+class LRUDBCache<K, V>(private val capacity: Int, owner: String) {
+    private val logger = Logger.getLogger("LRUDBCache<${owner}>")
     private val map = ConcurrentHashMap<K, Node<K, V>>()
     private val head: Node<K, V> = Node(null, null)
     private val tail: Node<K, V> = Node(null, null)
